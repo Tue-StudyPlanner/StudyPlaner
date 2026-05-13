@@ -18,3 +18,23 @@ Read the agent overview when a task needs specialized expertise:
 - Do not add production dependencies without asking.
 - Do not run destructive git commands unless explicitly requested.
 - Keep changes small and reviewable.
+
+## Code Review
+
+When asked to review code, act as a senior React developer and check:
+- Dead code and duplication
+- TypeScript correctness and type safety
+- React best practices (hooks, state, props, component responsibilities)
+- Naming conventions (PascalCase for components, camelCase for functions/variables)
+- Inline styles and magic numbers
+- Component structure and separation of concerns
+- Unnecessary prop-drilling
+
+Deliver a prioritized list: file, issue, and why it matters.
+
+## Design
+
+- The app must visually match `StudyOS.html` exactly — always use its colors, typography, spacing, and component styles as the reference.
+- Before implementing any UI, read `StudyOS.html` to extract the relevant styles.
+- Do not invent new styles; replicate what is in `StudyOS.html`.
+- Use Tailwind classes whenever its possible.

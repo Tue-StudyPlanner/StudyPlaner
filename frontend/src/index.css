@@ -1,1 +1,60 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: 'Inter', -apple-system, sans-serif;
+  --font-serif: 'Source Serif 4', Georgia, serif;
+
+  --color-bg: rgb(239 239 239);
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F8F8F8;
+  --color-border: #DEDEDE;
+  --color-border-light: #E8E8E8;
+
+  --color-fg: #1A1815;
+  --color-fg-mid: #555555;
+  --color-fg-muted: #999999;
+
+  --color-sidebar: rgb(38 50 58);
+  --color-sidebar-hover: rgb(48 62 72);
+  --color-sidebar-active: rgb(28 38 46);
+
+  --color-primary: rgb(147 13 42);
+  --color-primary-soft: #FBEBEF;
+  --color-accent: rgb(156 109 0);
+
+  --color-pill-bg: #F0F0F0;
+  --color-pill-border: #E0E0E0;
+  --color-pill-text: #444444;
+
+  --color-row-alt: #FAFAFA;
+
+  /* Brand color is intentionally fixed across themes (logo). Do not override in .dark. */
+  --color-brand: rgb(147 13 42);
+}
+
+.dark {
+  --color-bg: rgb(26 28 32);
+  --color-surface: #27292F;
+  --color-surface-hover: #2E3036;
+  --color-border: #3A3D44;
+  --color-border-light: #33363D;
+
+  --color-fg: #EDEDED;
+  --color-fg-mid: #B0B2B8;
+  --color-fg-muted: #B1B2B7;
+
+  --color-sidebar: rgb(20 28 34);
+  --color-sidebar-hover: rgb(38 50 58);
+  --color-sidebar-active: rgb(12 18 22);
+
+  --color-primary: #D14060;
+  --color-primary-soft: #3A1A22;
+
+  --color-pill-bg: #34363C;
+  --color-pill-border: #42454C;
+  --color-pill-text: #CCCCCC;
+
+  --color-row-alt: #2C2E34;
+}

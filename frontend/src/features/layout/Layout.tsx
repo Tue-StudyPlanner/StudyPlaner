@@ -1,0 +1,13 @@
+import { Outlet } from 'react-router-dom'
+import { TopBar } from './TopBar'
+
+export function Layout() {
+  return (
+    <div className="flex flex-col h-screen text-sm font-sans bg-bg text-fg">
+      <TopBar />
+      <main className="flex-1 overflow-auto">
+        <Outlet />
+      </main>
+    </div>
+  )
+}
