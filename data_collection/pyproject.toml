@@ -1,0 +1,14 @@
+[project]
+name = "alma-course-scraper"
+version = "0.1.0"
+description = "Scrape public ALMA course catalog branches and course detail data."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4>=4.12",
+    "requests>=2.31",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
