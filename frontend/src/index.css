@@ -32,6 +32,14 @@
 
   /* Brand color is intentionally fixed across themes (logo). Do not override in .dark. */
   --color-brand: rgb(147 13 42);
+
+  /* Master category colors — fixed across themes, taken from StudyOS.html. */
+  --color-cat-tech: #0077b6;
+  --color-cat-theo: #f72585;
+  --color-cat-prak: #4cc9f0;
+  --color-cat-info: #7209b7;
+  --color-cat-fokus: #ef233c;
+  --color-cat-basis: #ef233c;
 }
 
 .dark {
