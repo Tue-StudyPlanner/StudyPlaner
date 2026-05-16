@@ -13,6 +13,13 @@ export interface CourseExam {
   duration: string
 }
 
+export interface CompletedCourse {
+  id: string
+  ects: number
+  grade: number
+  semester: string
+}
+
 export interface Course {
   id: string
   number: string

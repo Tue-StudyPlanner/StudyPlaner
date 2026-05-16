@@ -1,16 +1,12 @@
 import coursesData from '../data/courses.json'
-import type { Course } from '../types'
+import type { CompletedCourse, Course } from '../types'
 
 interface CoursesData {
   courses: Course[]
+  completedCourses: CompletedCourse[]
 }
 
-/**
- * Provides the static course catalog bundled from courses.json.
- * The cast narrows the JSON's widened string types (e.g. masterCats)
- * back to the typed Course shape; the data file is the source of truth.
- */
-export function useCourses(): { courses: Course[] } {
-  const { courses } = coursesData as CoursesData
-  return { courses }
+export function useCourses(): { courses: Course[]; completedCourses: CompletedCourse[] } {
+  const { courses, completedCourses } = coursesData as CoursesData
+  return { courses, completedCourses }
 }
