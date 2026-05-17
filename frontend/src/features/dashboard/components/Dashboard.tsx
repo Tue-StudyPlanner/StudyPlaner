@@ -1,4 +1,5 @@
 import { useStudyStats } from '../hooks/useStudyStats'
+import { CategoryProgress } from './CategoryProgress'
 
 interface StatItemProps {
   label: string
@@ -39,6 +40,13 @@ export function Dashboard() {
         {stats.map((stat, i) => (
           <StatItem key={stat.label} {...stat} withDivider={i > 0} />
         ))}
+      </div>
+
+      <div className="mt-4.5 grid grid-cols-2 gap-4.5">
+        <CategoryProgress />
+        <div className="flex items-center justify-center rounded-[10px] border border-dashed border-border bg-surface p-6 text-[13.5px] text-fg-muted">
+          More insights coming soon
+        </div>
       </div>
     </div>
   )

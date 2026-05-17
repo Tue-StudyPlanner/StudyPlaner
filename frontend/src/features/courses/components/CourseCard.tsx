@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { Course, MasterCat } from '../types'
 import { ClockIcon, PinIcon, UserIcon } from './icons'
 
@@ -33,7 +34,7 @@ function TypePill({ label }: { label: string }) {
   )
 }
 
-function InfoRow({ icon, text }: { icon: React.ReactNode; text: string }) {
+function InfoRow({ icon, text }: { icon: ReactNode; text: string }) {
   return (
     <div className="flex min-w-0 items-center gap-2 text-[12.5px] text-fg-mid">
       <span className="text-fg-muted">{icon}</span>
@@ -48,7 +49,8 @@ function plainLecturerName(lecturer: string): string {
 }
 
 export function CourseCard({ course }: CourseCardProps) {
-  const slot = course.schedule[0]
+  // A course may have no scheduled slot; the time/room rows are skipped then.
+  const slot = course.schedule.at(0)
 
   return (
     <div className="flex flex-col gap-3 rounded-[10px] border border-border bg-surface px-4.5 py-4 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
@@ -68,8 +70,8 @@ export function CourseCard({ course }: CourseCardProps) {
 
       <div className="flex flex-col gap-1.5 border-t border-border-light pt-1">
         <InfoRow icon={<UserIcon />} text={plainLecturerName(course.lecturer)} />
-        <InfoRow icon={<ClockIcon />} text={`${slot.day}, ${slot.time}`} />
-        <InfoRow icon={<PinIcon />} text={slot.room} />
+        {slot && <InfoRow icon={<ClockIcon />} text={`${slot.day}, ${slot.time}`} />}
+        {slot && <InfoRow icon={<PinIcon />} text={slot.room} />}
       </div>
 
       <div className="flex items-center border-t border-border-light pt-1.5">

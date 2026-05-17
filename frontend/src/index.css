@@ -40,6 +40,9 @@
   --color-cat-info: #7209b7;
   --color-cat-fokus: #ef233c;
   --color-cat-basis: #ef233c;
+
+  /* Thesis progress accent — fixed across themes, taken from StudyOS.html. */
+  --color-thesis: #1dd3b0;
 }
 
 .dark {

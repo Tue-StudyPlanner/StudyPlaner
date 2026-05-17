@@ -1,5 +1,7 @@
 export type MasterCat = 'TECH' | 'THEO' | 'PRAK' | 'INFO' | 'FOKUS' | 'BASIS'
 
+export type MasterCategoryMeta = Record<MasterCat, { fullLabel: string }>
+
 export interface ScheduleSlot {
   day: string
   time: string
@@ -16,6 +18,7 @@ export interface CourseExam {
 export interface CompletedCourse {
   id: string
   ects: number
+  masterCats: MasterCat[]
   grade: number
   semester: string
 }

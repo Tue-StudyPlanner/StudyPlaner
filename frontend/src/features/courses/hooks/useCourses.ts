@@ -1,12 +1,12 @@
-import coursesData from '../data/courses.json'
-import type { CompletedCourse, Course } from '../types'
+import coursesData from '@data/courses.json'
+import type { CompletedCourse, Course, MasterCategoryMeta } from '../types'
 
 interface CoursesData {
   courses: Course[]
   completedCourses: CompletedCourse[]
+  masterCategoryMeta: MasterCategoryMeta
 }
 
-export function useCourses(): { courses: Course[]; completedCourses: CompletedCourse[] } {
-  const { courses, completedCourses } = coursesData as CoursesData
-  return { courses, completedCourses }
+export function useCourses(): CoursesData {
+  return coursesData as CoursesData
 }
