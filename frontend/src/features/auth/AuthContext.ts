@@ -2,13 +2,12 @@ import { createContext } from 'react'
 import type { AuthUser } from './types'
 
 export interface RegisterInput {
-  email: string
-  displayName: string
+  identifier: string
   password: string
 }
 
 export interface LoginInput {
-  email: string
+  identifier: string
   password: string
 }
 

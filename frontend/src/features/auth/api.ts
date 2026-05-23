@@ -8,13 +8,12 @@ import type {
 } from './types'
 
 interface RegisterInput {
-  email: string
-  displayName: string
+  identifier: string
   password: string
 }
 
 interface LoginInput {
-  email: string
+  identifier: string
   password: string
 }
 

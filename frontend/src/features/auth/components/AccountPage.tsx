@@ -1,11 +1,41 @@
 import type { FormEvent } from 'react'
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../../shared/utils/api'
 import { fetchRegulationVersions, fetchStudyPrograms } from '../api'
 import { useAuth } from '../hooks/useAuth'
 import type { RegulationVersionOption, StudyProgramOption } from '../types'
+import { ROUTES } from '../../routes'
 
 type AuthMode = 'login' | 'register'
+
+function getCurrentSemester(): string {
+  const now = new Date()
+  const month = now.getMonth() + 1
+  const year = now.getFullYear()
+  if (month >= 4 && month <= 9) return `SS ${year}`
+  const ws = month >= 10 ? year : year - 1
+  return `WS ${ws}/${String(ws + 1).slice(-2)}`
+}
+
+function generateStartSemesters(count: number): string[] {
+  const now = new Date()
+  const month = now.getMonth() + 1
+  const year = now.getFullYear()
+  let isSummer = month >= 4 && month <= 9
+  let y = isSummer ? year : (month >= 10 ? year : year - 1)
+  const list: string[] = []
+  for (let i = 0; i < count; i++) {
+    list.push(isSummer ? `SS ${y}` : `WS ${y}/${String(y + 1).slice(-2)}`)
+    if (isSummer) {
+      isSummer = false
+    } else {
+      y -= 1
+      isSummer = true
+    }
+  }
+  return list
+}
 
 function normalizeErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
@@ -23,9 +53,9 @@ function toSelectValue(value: number | null | undefined): string {
 
 export function AccountPage() {
   const { user, isAuthenticated, isLoadingSession, login, logout, register, saveProfile } = useAuth()
+  const navigate = useNavigate()
   const [mode, setMode] = useState<AuthMode>('login')
-  const [email, setEmail] = useState<string>('')
-  const [displayName, setDisplayName] = useState<string>('')
+  const [identifier, setIdentifier] = useState<string>('')
   const [password, setPassword] = useState<string>('')
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -116,10 +146,11 @@ export function AccountPage() {
 
     try {
       if (mode === 'register') {
-        await register({ email, displayName, password })
-        setMessage('Your account has been created and signed in.')
+        await register({ identifier, password })
+        navigate(ROUTES.dashboard)
+        return
       } else {
-        await login({ email, password })
+        await login({ identifier, password })
         setMessage('Signed in successfully.')
       }
       setPassword('')
@@ -262,23 +293,31 @@ export function AccountPage() {
 
               <label className="grid gap-1.5">
                 <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-                  Current semester
+                  Start semester
                 </span>
-                <input
-                  type="text"
+                <select
                   value={currentSemesterLabel}
                   onChange={(event) => setCurrentSemesterLabel(event.target.value)}
-                  placeholder="e.g. SS 2026"
-                  className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-muted focus:border-primary"
-                />
+                  className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
+                >
+                  <option value="">Not specified</option>
+                  {generateStartSemesters(20).map((sem) => (
+                    <option key={sem} value={sem}>{sem}</option>
+                  ))}
+                </select>
               </label>
 
               <div className="lg:col-span-3 flex flex-wrap items-center justify-between gap-3 pt-2">
-                <p className="text-[12.5px] text-fg-muted">
-                  {selectedStudyProgram?.defaultRegulationName && selectedStudyProgram?.defaultRegulationVersionLabel
-                    ? `Default mapping: ${selectedStudyProgram.defaultRegulationName} ${selectedStudyProgram.defaultRegulationVersionLabel}`
-                    : 'The backend will apply the default mapped regulation when available.'}
-                </p>
+                <div className="grid gap-0.5">
+                  <p className="text-[12.5px] text-fg-muted">
+                    {selectedStudyProgram?.defaultRegulationName && selectedStudyProgram?.defaultRegulationVersionLabel
+                      ? `Default mapping: ${selectedStudyProgram.defaultRegulationName} ${selectedStudyProgram.defaultRegulationVersionLabel}`
+                      : 'The backend will apply the default mapped regulation when available.'}
+                  </p>
+                  <p className="text-[12.5px] text-fg-muted">
+                    Current semester (auto-detected): <span className="font-medium text-fg">{getCurrentSemester()}</span>
+                  </p>
+                </div>
                 <button
                   type="submit"
                   disabled={isSubmitting || isLoadingOptions}
@@ -321,31 +360,17 @@ export function AccountPage() {
             <form onSubmit={(event) => void handleSubmit(event)} className="grid gap-3.5">
               <label className="grid gap-1.5">
                 <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-                  Email
+                  Email or username
                 </span>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  type="text"
+                  value={identifier}
+                  onChange={(event) => setIdentifier(event.target.value)}
                   required
+                  autoComplete="username"
                   className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-muted focus:border-primary"
                 />
               </label>
-
-              {mode === 'register' ? (
-                <label className="grid gap-1.5">
-                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-                    Display name
-                  </span>
-                  <input
-                    type="text"
-                    value={displayName}
-                    onChange={(event) => setDisplayName(event.target.value)}
-                    required
-                    className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-muted focus:border-primary"
-                  />
-                </label>
-              ) : null}
 
               <label className="grid gap-1.5">
                 <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
@@ -356,7 +381,7 @@ export function AccountPage() {
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
-                  minLength={8}
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
                   className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-muted focus:border-primary"
                 />
               </label>

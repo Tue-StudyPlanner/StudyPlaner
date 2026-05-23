@@ -10,9 +10,9 @@ from db.d1 import execute, fetch_one
 from env_config import get_env_value
 from http_utils import get_request_header
 
-PASSWORD_MIN_LENGTH = 8
 PASSWORD_PBKDF2_ITERATIONS = 310_000
 DEFAULT_SESSION_TTL_DAYS = 30
+LOGIN_IDENTIFIER_MAX_LENGTH = 255
 
 
 class AuthenticationError(ValueError):
@@ -71,30 +71,26 @@ def _hash_session_token(token: str) -> str:
     return hashlib.sha256(token.encode('utf-8')).hexdigest()
 
 
-def _validate_email(email: str | None) -> str:
-    normalized_email = (email or '').strip().lower()
-    if not normalized_email or '@' not in normalized_email:
-        raise RegistrationError('A valid email address is required.')
-    if len(normalized_email) > 255:
-        raise RegistrationError('Email addresses must be shorter than 256 characters.')
-    return normalized_email
+def _validate_login_identifier(identifier: str | None) -> str:
+    normalized = (identifier or '').strip().lower()
+    if not normalized:
+        raise RegistrationError('An email or username is required.')
+    if len(normalized) > LOGIN_IDENTIFIER_MAX_LENGTH:
+        raise RegistrationError(
+            f'Identifiers must be shorter than {LOGIN_IDENTIFIER_MAX_LENGTH + 1} characters.'
+        )
+    return normalized
 
 
-def _validate_display_name(display_name: str | None) -> str:
-    normalized_display_name = (display_name or '').strip()
-    if len(normalized_display_name) < 2:
-        raise RegistrationError('Display names must contain at least 2 characters.')
-    if len(normalized_display_name) > 80:
-        raise RegistrationError('Display names must be shorter than 81 characters.')
-    return normalized_display_name
+def _derive_display_name(identifier: str) -> str:
+    base = identifier.split('@', 1)[0] if '@' in identifier else identifier
+    return base.strip()[:80]
 
 
 def _validate_password(password: Any) -> str:
     normalized_password = password if isinstance(password, str) else ''
-    if len(normalized_password) < PASSWORD_MIN_LENGTH:
-        raise RegistrationError(
-            f'Passwords must contain at least {PASSWORD_MIN_LENGTH} characters.'
-        )
+    if len(normalized_password) == 0:
+        raise RegistrationError('Passwords must not be empty.')
     return normalized_password
 
 
@@ -109,7 +105,7 @@ def _extract_bearer_token(request: Any) -> str | None:
     return token or None
 
 
-async def _get_user_by_email(env: Any, email: str) -> dict[str, Any] | None:
+async def _get_user_by_identifier(env: Any, identifier: str) -> dict[str, Any] | None:
     sql = """
         SELECT
             id,
@@ -121,7 +117,7 @@ async def _get_user_by_email(env: Any, email: str) -> dict[str, Any] | None:
         WHERE email = ?
         LIMIT 1
     """
-    return await fetch_one(env, sql, [email])
+    return await fetch_one(env, sql, [identifier])
 
 
 async def _get_user_profile(env: Any, user_id: int) -> dict[str, Any] | None:
@@ -196,13 +192,16 @@ async def _create_session(env: Any, user_id: int, user_agent: str | None) -> str
 
 
 async def register_user(env: Any, payload: dict[str, Any], request: Any) -> dict[str, Any]:
-    email = _validate_email(_safe_text(payload.get('email')))
-    display_name = _validate_display_name(_safe_text(payload.get('displayName')))
+    raw_identifier = payload.get('identifier')
+    if raw_identifier in (None, ''):
+        raw_identifier = payload.get('email')
+    identifier = _validate_login_identifier(_safe_text(raw_identifier))
+    display_name = _derive_display_name(identifier)
     password = _validate_password(payload.get('password'))
 
-    existing_user = await _get_user_by_email(env, email)
+    existing_user = await _get_user_by_identifier(env, identifier)
     if existing_user is not None:
-        raise RegistrationError('An account already exists for this email address.')
+        raise RegistrationError('An account already exists for this email or username.')
 
     password_hash, password_salt = _create_password_hash(password)
     now_unix = _now_unix()
@@ -219,10 +218,10 @@ async def register_user(env: Any, payload: dict[str, Any], request: Any) -> dict
             updated_at_unix
         ) VALUES (?, ?, ?, ?, ?, ?)
         """,
-        [email, password_hash, password_salt, display_name, now_unix, now_unix],
+        [identifier, password_hash, password_salt, display_name, now_unix, now_unix],
     )
 
-    created_user = await _get_user_by_email(env, email)
+    created_user = await _get_user_by_identifier(env, identifier)
     if created_user is None:
         raise RegistrationError('The account could not be created.')
 
@@ -254,16 +253,19 @@ async def register_user(env: Any, payload: dict[str, Any], request: Any) -> dict
 
 
 async def login_user(env: Any, payload: dict[str, Any], request: Any) -> dict[str, Any]:
-    email = _validate_email(_safe_text(payload.get('email')))
+    raw_identifier = payload.get('identifier')
+    if raw_identifier in (None, ''):
+        raw_identifier = payload.get('email')
+    identifier = _validate_login_identifier(_safe_text(raw_identifier))
     password = _validate_password(payload.get('password'))
 
-    user_row = await _get_user_by_email(env, email)
+    user_row = await _get_user_by_identifier(env, identifier)
     if user_row is None:
-        raise AuthenticationError('Invalid email or password.')
+        raise AuthenticationError('Invalid credentials.')
 
     expected_hash = _hash_password(password, str(user_row['passwordSalt']))
     if not hmac.compare_digest(str(user_row['passwordHash']), expected_hash):
-        raise AuthenticationError('Invalid email or password.')
+        raise AuthenticationError('Invalid credentials.')
 
     session_token = await _create_session(
         env,
