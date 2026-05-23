@@ -12,7 +12,8 @@ This file is the persistent checklist for upcoming product work.
 
 ## Current baseline
 
-- The frontend course catalog still reads mock/bootstrap data from `backend/data/courses.json`.
+- The public course catalog already reads from the Worker API and D1.
+- Temporary bootstrap data still exists for personal-progress example state.
 - The Worker API already exposes `GET /api/courses`, `GET /api/courses/<id>`, and `GET /api/study-programs`.
 - Favorites are currently stored only in browser `localStorage`.
 - Completed courses / transcript state are currently stored only in browser `localStorage`.
@@ -43,7 +44,7 @@ This file is the persistent checklist for upcoming product work.
 - [x] 1.3 Switch the frontend course overview from `backend/data/courses.json` to the Worker API.
 - [x] 1.4 Switch course detail and related catalog views to the API-backed flow.
 - [x] 1.5 Remove the remaining mock-data dependency from the catalog path.
-- [ ] 1.6 Reconcile the remaining `backend/data/courses.json` bootstrap usage with the completed API migration and document which entry points still show mock data.
+- [x] 1.6 Reconcile the remaining `backend/data/courses.json` bootstrap usage with the completed API migration and document which entry points still show mock data.
 - [ ] 1.7 Ensure first-time signed-out visitors load the public catalog only from API/database data, without any personal setup.
 
 ## 2. Examination regulations and study-program mapping
@@ -61,8 +62,8 @@ This file is the persistent checklist for upcoming product work.
 - [x] 3.3 Implement backend account creation, sign-in, and session handling.
 - [x] 3.4 Implement the frontend account flow.
 - [x] 3.5 Store the user's selected study program and regulation in the profile.
-- [ ] 3.6 Make authentication optional for browsing so signed-out visitors can still see the full public course and study-program data.
-- [ ] 3.7 Add signed-out empty states for favorites, progress, and other personalized modules instead of forcing account creation.
+- [x] 3.6 Make authentication optional for browsing so signed-out visitors can still see the full public course and study-program data.
+- [x] 3.7 Add signed-out empty states for favorites, progress, and other personalized modules instead of forcing account creation.
 
 ## 4. Favorites persistence
 

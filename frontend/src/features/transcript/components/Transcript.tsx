@@ -1,4 +1,6 @@
+import { PersonalFeatureNotice } from '../../../shared/components/PersonalFeatureNotice'
 import { StatItem } from '../../../shared/components/StatItem'
+import { useAuth } from '../../auth'
 import type { CompletedCourse, MasterCat } from '../../courses'
 import { useStudyStats } from '../hooks/useStudyStats'
 import { useTranscript } from '../hooks/useTranscript'
@@ -58,7 +60,7 @@ function ImportedCourseRow({ course, isLast, onRemove, onCategoryChange }: Impor
   )
 }
 
-export function Transcript() {
+function AuthenticatedTranscript() {
   const { completedCourses, removeCourse, setCategory } = useTranscript()
   const { totalEcts, requiredEcts, progress, averageGrade } = useStudyStats()
 
@@ -67,6 +69,49 @@ export function Transcript() {
     { label: 'ECTS Earned', value: `${totalEcts} / ${requiredEcts}` },
     { label: 'Ø Grade', value: averageGrade !== null ? averageGrade.toFixed(2) : '–' },
   ]
+
+  return (
+    <div className="grid grid-cols-5 items-start gap-3.5">
+      <UploadDropZone />
+
+      <div className="col-span-3 flex flex-col gap-3.5">
+        <div className="grid grid-cols-3 gap-3.5">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-[10px] border border-border bg-surface px-6 py-4.5"
+            >
+              <StatItem label={stat.label} value={stat.value} />
+            </div>
+          ))}
+        </div>
+
+        <div className="rounded-[10px] border border-border bg-surface px-6 py-5.5">
+          <div className="mb-4 text-[14px] font-semibold text-fg">Imported Courses</div>
+
+          {completedCourses.length === 0 ? (
+            <div className="py-6 text-center text-[13px] text-fg-muted">No courses imported yet.</div>
+          ) : (
+            <div className="flex flex-col">
+              {completedCourses.map((course, i) => (
+                <ImportedCourseRow
+                  key={course.id}
+                  course={course}
+                  isLast={i === completedCourses.length - 1}
+                  onRemove={() => removeCourse(course.id)}
+                  onCategoryChange={(cat) => setCategory(course.id, cat)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function Transcript() {
+  const { isAuthenticated } = useAuth()
 
   return (
     <div className="p-8">
@@ -79,44 +124,14 @@ export function Transcript() {
         </p>
       </div>
 
-      <div className="grid grid-cols-5 items-start gap-3.5">
-        <UploadDropZone />
-
-        <div className="col-span-3 flex flex-col gap-3.5">
-          <div className="grid grid-cols-3 gap-3.5">
-            {stats.map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-[10px] border border-border bg-surface px-6 py-4.5"
-              >
-                <StatItem label={stat.label} value={stat.value} />
-              </div>
-            ))}
-          </div>
-
-          <div className="rounded-[10px] border border-border bg-surface px-6 py-5.5">
-            <div className="mb-4 text-[14px] font-semibold text-fg">Imported Courses</div>
-
-            {completedCourses.length === 0 ? (
-              <div className="py-6 text-center text-[13px] text-fg-muted">
-                No courses imported yet.
-              </div>
-            ) : (
-              <div className="flex flex-col">
-                {completedCourses.map((course, i) => (
-                  <ImportedCourseRow
-                    key={course.id}
-                    course={course}
-                    isLast={i === completedCourses.length - 1}
-                    onRemove={() => removeCourse(course.id)}
-                    onCategoryChange={(cat) => setCategory(course.id, cat)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {isAuthenticated ? (
+        <AuthenticatedTranscript />
+      ) : (
+        <PersonalFeatureNotice
+          title="Transcript and progress need your account"
+          description="Your transcript, completed courses, and grade data are private. Sign in to upload or manage them while the public catalog remains accessible without login."
+        />
+      )}
     </div>
   )
 }

@@ -16,7 +16,8 @@ The branch already contains:
 
 ## Important current state
 
-- The frontend still uses `backend/data/courses.json` as mock/bootstrap data.
+- The public catalog now reads from the Worker API and D1.
+- The transcript/progress area still contains temporary example completed-course bootstrap data.
 - The backend Worker already reads from D1.
 - The first D1 migration intentionally excludes SQLite full-text search tables.
 - The local scraper stays local and is not part of the Cloudflare deployment.
@@ -27,8 +28,7 @@ This means tomorrow's test proves:
 - Worker deployment works
 - D1 schema and data import work
 - Worker endpoints work against D1
-
-It does **not** yet prove that the frontend is fully switched to the Worker API.
+- the public catalog can already run against the deployed API
 
 ## Recommended test resources
 
@@ -415,13 +415,13 @@ Open question:
 
 This is not solved in the first migration.
 
-### 3. Frontend data source
+### 3. Remaining personal-data cutovers
 
 Open question:
 
-- when will the frontend switch from `backend/data/courses.json` to Worker API requests?
+- when will favorites, progress, and transcript data move fully from temporary browser/bootstrap state to authenticated persistence?
 
-This is the main remaining application integration step.
+This is the main remaining application integration step after the catalog cutover.
 
 ### 4. User accounts and persistence
 

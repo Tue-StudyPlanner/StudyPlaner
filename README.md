@@ -17,7 +17,7 @@ The repository is prepared for a Cloudflare move with minimal application change
 - The D1 schema is generated from `backend/data/alma.sqlite`.
 - A local export script can create a D1 seed dump from the existing SQLite data.
 
-The frontend still uses `backend/data/courses.json` as its mock/bootstrap data. Moving the UI fully to the Worker API is the next logical step after the infrastructure migration.
+The public catalog now reads from the Worker API and D1. Remaining temporary bootstrap data is limited to personal-progress example state; see `docs/mock-data-status.md`.
 
 ## Local development
 
@@ -79,5 +79,6 @@ npx wrangler d1 execute studyplaner-db --local --file .tmp/d1-seed.sql
 
 - Cloudflare development: `docs/cloudflare-development.md`
 - Cloudflare setup: `docs/cloudflare-setup.md`
+- Mock-data status: `docs/mock-data-status.md`
 - Repo audit: `docs/repo-audit.md`
 - Backend details: `backend/README.md`

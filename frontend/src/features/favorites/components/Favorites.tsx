@@ -1,18 +1,17 @@
+import { PersonalFeatureNotice } from '../../../shared/components/PersonalFeatureNotice'
+import { useAuth } from '../../auth'
 import { CourseCard } from '../../../shared/components/CourseCard'
 import { useCatalogCourses } from '../../courses'
 import { useFavorites } from '../hooks/useFavorites'
 
-export function Favorites() {
+function AuthenticatedFavorites() {
   const { courses, isLoading, error } = useCatalogCourses('')
   const { favoriteIds, isFavorite, toggleFavorite } = useFavorites()
 
   const favoriteCourses = courses.filter((course) => favoriteIds.includes(course.id))
 
   return (
-    <div className="p-8">
-      <h2 className="mb-2 text-2xl font-bold">Favorites</h2>
-      <p className="mb-6 text-fg-mid">Your bookmarked and favorited courses.</p>
-
+    <>
       {isLoading ? (
         <div className="rounded-[10px] border border-border bg-surface px-8 py-15 text-center text-[13.5px] text-fg-muted">
           Loading favorite courses from the database...
@@ -36,6 +35,26 @@ export function Favorites() {
             />
           ))}
         </div>
+      )}
+    </>
+  )
+}
+
+export function Favorites() {
+  const { isAuthenticated } = useAuth()
+
+  return (
+    <div className="p-8">
+      <h2 className="mb-2 text-2xl font-bold">Favorites</h2>
+      <p className="mb-6 text-fg-mid">Your bookmarked and favorited courses.</p>
+
+      {isAuthenticated ? (
+        <AuthenticatedFavorites />
+      ) : (
+        <PersonalFeatureNotice
+          title="Favorites stay with your account"
+          description="Sign in to save favorite courses across devices. You can still browse the full public catalog without an account."
+        />
       )}
     </div>
   )

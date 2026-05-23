@@ -10,7 +10,8 @@
   - `frontend/tsconfig.app.json`
   - `frontend/tsconfig.node.json`
 - `npm run build` works after installing dependencies.
-- The UI currently reads bootstrap data from `backend/data/courses.json` through the Vite `@data` alias.
+- The public catalog now reads from the Worker API instead of `backend/data/courses.json`.
+- `backend/data/courses.json` remains only as a legacy reference file and is not part of the active frontend runtime path.
 - `frontend/public/_redirects` was added for Cloudflare Pages SPA routing.
 
 ## Backend
@@ -41,7 +42,7 @@
 
 ## Risks / open points
 
-- The frontend still uses mock/bootstrap JSON instead of the Worker API.
+- The transcript/progress area still uses temporary example completed-course bootstrap data.
 - The first D1 migration does not yet include full-text search.
 - End-user authentication, favorites persistence, and study-progress storage are still open product and backend topics.
 - The local scraper/import flow remains local by design and is not deployed to Cloudflare.
@@ -52,5 +53,5 @@
 2. Create the D1 database and set the real `database_id` in `backend/wrangler.toml`.
 3. Apply `backend/migrations/0001_initial.sql`.
 4. Export/import the existing SQLite data into D1.
-5. Move the frontend from `backend/data/courses.json` to the Worker API.
+5. Finish the signed-out visitor flow and remaining personal-data cutovers.
 6. Design the later user-data model for favorites, progress, and authentication.

@@ -8,7 +8,8 @@ Short daily workflow for teammates and agents.
 - Frontend: Cloudflare Pages from `frontend/`
 - Backend: Cloudflare Worker from `backend/`
 - Database: Cloudflare D1 bound as `DB`
-- Current limitation: the frontend still uses `backend/data/courses.json` mock data and is not fully switched to the Worker API yet
+- Public catalog status: the frontend catalog now uses the Worker API and D1
+- Remaining mock/bootstrap data is limited to temporary personal-progress example state; see `docs/mock-data-status.md`
 
 ## Local development
 
@@ -91,4 +92,4 @@ Also verify in the browser:
 
 - Pages frontend loads
 - direct route refresh works
-- frontend can reach the configured API once the API integration is enabled in the app
+- frontend catalog and public data views can reach the configured API

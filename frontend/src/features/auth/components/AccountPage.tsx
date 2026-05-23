@@ -51,12 +51,6 @@ export function AccountPage() {
   }, [user])
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      setStudyPrograms([])
-      setRegulationVersions([])
-      return
-    }
-
     let isActive = true
 
     async function loadOptions(): Promise<void> {
@@ -88,7 +82,7 @@ export function AccountPage() {
     return () => {
       isActive = false
     }
-  }, [isAuthenticated])
+  }, [])
 
   const selectedStudyProgram = useMemo(
     () => studyPrograms.find((program) => program.id === selectedStudyProgramId) ?? null,
@@ -384,6 +378,42 @@ export function AccountPage() {
               <li className="list-disc">Store your selected study program and regulation</li>
               <li className="list-disc">Save completed courses and personal progress</li>
             </ul>
+          </section>
+
+          <section className="rounded-[10px] border border-border bg-surface px-6 py-5.5 lg:col-span-2">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h2 className="text-[14px] font-semibold text-fg">Public study programs</h2>
+                <p className="text-[12.5px] text-fg-muted">
+                  Browsing the public catalog and study-program data does not require an account.
+                </p>
+              </div>
+            </div>
+
+            {isLoadingOptions ? (
+              <div className="text-[13px] text-fg-muted">Loading public study-program data...</div>
+            ) : (
+              <div className="grid gap-3 lg:grid-cols-2">
+                {studyPrograms.map((studyProgram) => (
+                  <div
+                    key={studyProgram.id}
+                    className="rounded-lg border border-border-light px-4 py-3"
+                  >
+                    <div className="text-[13px] font-semibold text-fg">{studyProgram.name}</div>
+                    <div className="text-[12.5px] text-fg-mid">
+                      {studyProgram.degree || 'Degree n/a'}
+                      {studyProgram.poVersion ? ` · PO ${studyProgram.poVersion}` : ''}
+                    </div>
+                    <div className="text-[12px] text-fg-muted">
+                      Default regulation:{' '}
+                      {studyProgram.defaultRegulationName && studyProgram.defaultRegulationVersionLabel
+                        ? `${studyProgram.defaultRegulationName} ${studyProgram.defaultRegulationVersionLabel}`
+                        : 'not mapped yet'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         </div>
       )}
