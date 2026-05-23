@@ -11,6 +11,11 @@ from services.course_catalog import (
     list_catalog_courses,
     list_courses,
 )
+from services.regulations import (
+    get_regulation_version,
+    list_regulation_course_categories,
+    list_regulation_versions,
+)
 
 
 async def _database_status(env: Any) -> dict[str, Any]:
@@ -48,18 +53,33 @@ async def _database_status(env: Any) -> dict[str, Any]:
 async def _list_study_programs(env: Any) -> list[dict[str, Any]]:
     sql = """
         SELECT
-            id,
-            code,
-            name,
-            degree,
-            subject,
-            po_version AS poVersion,
-            total_ects AS totalEcts,
-            language,
-            source_status AS sourceStatus,
-            notes
-        FROM study_programs
-        ORDER BY name ASC
+            sp.id,
+            sp.code,
+            sp.name,
+            sp.degree,
+            sp.subject,
+            sp.po_version AS poVersion,
+            sp.total_ects AS totalEcts,
+            sp.language,
+            sp.source_status AS sourceStatus,
+            sp.notes,
+            rv.code AS defaultRegulationVersionCode,
+            rv.version_label AS defaultRegulationVersionLabel,
+            er.code AS defaultRegulationCode,
+            er.name AS defaultRegulationName,
+            sprv.enrollment_match AS enrollmentMatch,
+            (
+                SELECT COUNT(*)
+                FROM study_program_regulation_versions AS all_mappings
+                WHERE all_mappings.study_program_id = sp.id
+            ) AS regulationVersionCount
+        FROM study_programs AS sp
+        LEFT JOIN study_program_regulation_versions AS sprv
+            ON sprv.study_program_id = sp.id
+           AND sprv.is_default = 1
+        LEFT JOIN regulation_versions AS rv ON rv.id = sprv.regulation_version_id
+        LEFT JOIN examination_regulations AS er ON er.id = rv.regulation_id
+        ORDER BY sp.name ASC
     """
     return await fetch_all(env, sql)
 
@@ -93,6 +113,8 @@ async def route_request(request: Any, env: Any) -> Any:
                         "courseDetail": "/api/courses/<id>",
                         "catalogCourses": "/api/catalog/courses?limit=100",
                         "catalogCourseDetail": "/api/catalog/courses/<id>",
+                        "regulationVersions": "/api/regulation-versions",
+                        "regulationCatalog": "/api/regulation-versions/<code>/courses?limit=100",
                         "studyPrograms": "/api/study-programs",
                     },
                 },
@@ -197,6 +219,71 @@ async def route_request(request: Any, env: Any) -> Any:
                 )
 
             return json_response(course_detail, request=request, env=env)
+
+        if path == "/api/regulation-versions":
+            versions = await list_regulation_versions(env)
+            return json_response(
+                {
+                    "count": len(versions),
+                    "regulationVersions": versions,
+                },
+                request=request,
+                env=env,
+            )
+
+        if path.startswith("/api/regulation-versions/") and path.endswith("/courses"):
+            regulation_version_code = path.removeprefix("/api/regulation-versions/").removesuffix(
+                "/courses"
+            )
+            query = parse_qs(parsed_url.query)
+            limit_value = query.get("limit", ["100"])[0]
+            search_value = query.get("q", [None])[0]
+            try:
+                limit = int(limit_value)
+            except ValueError:
+                limit = 100
+
+            version = await get_regulation_version(env, regulation_version_code)
+            if version is None:
+                return error_response(
+                    code="regulation_version_not_found",
+                    message="No regulation version exists for the requested code.",
+                    request=request,
+                    env=env,
+                    status=404,
+                )
+
+            courses = await list_regulation_course_categories(
+                env,
+                regulation_version_code=regulation_version_code,
+                limit=limit,
+                search=search_value,
+            )
+            return json_response(
+                {
+                    "regulationVersion": {
+                        key: value for key, value in version.items() if key != "ruleGroups"
+                    },
+                    "count": len(courses),
+                    "courses": courses,
+                },
+                request=request,
+                env=env,
+            )
+
+        if path.startswith("/api/regulation-versions/"):
+            regulation_version_code = path.removeprefix("/api/regulation-versions/")
+            version = await get_regulation_version(env, regulation_version_code)
+            if version is None:
+                return error_response(
+                    code="regulation_version_not_found",
+                    message="No regulation version exists for the requested code.",
+                    request=request,
+                    env=env,
+                    status=404,
+                )
+
+            return json_response(version, request=request, env=env)
 
         if path == "/api/study-programs":
             programs = await _list_study_programs(env)

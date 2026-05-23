@@ -42,11 +42,11 @@ This file is the persistent checklist for upcoming product work.
 
 ## 2. Examination regulations and study-program mapping
 
-- [ ] 2.1 Define the minimum data model for examination regulations, versions, and rule groups.
-- [ ] 2.2 Add the database migration for regulations and regulation-to-course mappings.
-- [ ] 2.3 Seed the first supported examination regulations into the database.
-- [ ] 2.4 Expose regulation-aware course categorization through the API.
-- [ ] 2.5 Define how study programs map to regulation versions in the backend model.
+- [x] 2.1 Define the minimum data model for examination regulations, versions, and rule groups.
+- [x] 2.2 Add the database migration for regulations and regulation-to-course mappings.
+- [x] 2.3 Seed the first supported examination regulations into the database.
+- [x] 2.4 Expose regulation-aware course categorization through the API.
+- [x] 2.5 Define how study programs map to regulation versions in the backend model.
 
 ## 3. Accounts and personal data foundation
 
