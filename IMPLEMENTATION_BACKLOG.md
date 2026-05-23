@@ -45,7 +45,7 @@ This file is the persistent checklist for upcoming product work.
 - [x] 1.4 Switch course detail and related catalog views to the API-backed flow.
 - [x] 1.5 Remove the remaining mock-data dependency from the catalog path.
 - [x] 1.6 Reconcile the remaining `backend/data/courses.json` bootstrap usage with the completed API migration and document which entry points still show mock data.
-- [ ] 1.7 Ensure first-time signed-out visitors load the public catalog only from API/database data, without any personal setup.
+- [x] 1.7 Ensure first-time signed-out visitors load the public catalog only from API/database data, without any personal setup.
 
 ## 2. Examination regulations and study-program mapping
 
@@ -73,12 +73,12 @@ This file is the persistent checklist for upcoming product work.
 
 ## 5. Study-progress model and visualization
 
-- [ ] 5.1 Define the visualization categories, for example machine learning, vision, and mathematics.
-- [ ] 5.2 Map courses to visualization categories, ideally on top of the regulation model.
-- [ ] 5.3 Replace browser-only completed-course storage with account-based persistence.
-- [ ] 5.4 Implement a single source of truth for per-category progress calculation.
-- [ ] 5.5 Build the specialization-circle visualization in the frontend.
-- [ ] 5.6 Connect the visualization to persisted user data.
+- [x] 5.1 Define the visualization categories, for example machine learning, vision, and mathematics.
+- [x] 5.2 Map courses to visualization categories, ideally on top of the regulation model.
+- [x] 5.3 Replace browser-only completed-course storage with account-based persistence.
+- [x] 5.4 Implement a single source of truth for per-category progress calculation.
+- [x] 5.5 Build the specialization-circle visualization in the frontend.
+- [x] 5.6 Connect the visualization to persisted user data.
 
 ## 6. Semester planner / weekly schedule
 

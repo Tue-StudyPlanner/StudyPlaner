@@ -29,11 +29,15 @@ export interface StudyAreaOption {
 
 export interface CompletedCourse {
   id: string
+  courseId?: string | null
+  courseNumber?: string | null
+  externalCourseCode?: string | null
   title: string
   ects: number
   masterCat: MasterCat
-  grade: number
+  grade: number | null
   semester: string
+  source?: string
 }
 
 export interface Course {

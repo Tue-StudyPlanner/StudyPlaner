@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { CatBadge } from '../../../shared/components/CatBadge'
+import { useAuth } from '../../auth'
 import { useFavorites } from '../../favorites'
 import { ROUTES } from '../../routes'
 import { useCatalogCourseDetail } from '../hooks/useCatalogCourseDetail'
@@ -27,6 +28,7 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 
 export function CourseDetail() {
   const { courseId } = useParams<{ courseId: string }>()
+  const { isAuthenticated } = useAuth()
   const { course, isLoading, error } = useCatalogCourseDetail(courseId)
   const {
     isFavorite,
@@ -63,6 +65,12 @@ export function CourseDetail() {
 
   return (
     <div className="p-8">
+      {!isAuthenticated ? (
+        <div className="mb-4 rounded-[10px] border border-border bg-surface px-4 py-3 text-[13px] text-fg-muted">
+          This is public catalog data from the database. Sign in only if you want to save favorites or personal progress.
+        </div>
+      ) : null}
+
       {favoritesError ? (
         <div className="mb-4 rounded-[10px] border border-border bg-surface px-4 py-3 text-[13px] text-primary">
           {favoritesError}

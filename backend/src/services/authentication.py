@@ -137,8 +137,10 @@ async def _get_user_profile(env: Any, user_id: int) -> dict[str, Any] | None:
             rv.id AS regulationVersionId,
             rv.code AS regulationVersionCode,
             rv.version_label AS regulationVersionLabel,
+            rv.total_ects AS regulationTotalEcts,
             er.code AS regulationCode,
-            er.name AS regulationName
+            er.name AS regulationName,
+            sp.total_ects AS studyProgramTotalEcts
         FROM users AS u
         LEFT JOIN user_profiles AS up ON up.user_id = u.id
         LEFT JOIN study_programs AS sp ON sp.id = up.study_program_id
@@ -163,6 +165,7 @@ async def _get_user_profile(env: Any, user_id: int) -> dict[str, Any] | None:
             'regulationVersionId': row.get('regulationVersionId'),
             'regulationVersionCode': row.get('regulationVersionCode'),
             'regulationVersionLabel': row.get('regulationVersionLabel'),
+            'totalEcts': row.get('regulationTotalEcts') or row.get('studyProgramTotalEcts'),
             'regulationCode': row.get('regulationCode'),
             'regulationName': row.get('regulationName'),
         },

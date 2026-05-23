@@ -24,10 +24,16 @@ from services.course_catalog import (
     list_catalog_courses,
     list_courses,
 )
+from services.progress import get_current_user_progress
 from services.regulations import (
     get_regulation_version,
     list_regulation_course_categories,
     list_regulation_versions,
+)
+from services.user_completed_courses import (
+    CompletedCourseUpdateError,
+    get_current_user_completed_courses,
+    replace_current_user_completed_courses,
 )
 from services.user_favorites import (
     FavoriteUpdateError,
@@ -183,6 +189,26 @@ async def route_request(request: Any, env: Any) -> Any:
                 return json_response(favorites, request=request, env=env)
             return _method_not_allowed_response(request, env)
 
+        if path == "/api/me/completed-courses":
+            if method == "GET":
+                completed_courses = await get_current_user_completed_courses(env, request)
+                return json_response(completed_courses, request=request, env=env)
+            if method == "PUT":
+                completed_courses = await replace_current_user_completed_courses(
+                    env,
+                    request,
+                    await read_json_object(request),
+                )
+                return json_response(completed_courses, request=request, env=env)
+            return _method_not_allowed_response(request, env)
+
+        if path == "/api/me/progress":
+            if method != "GET":
+                return _method_not_allowed_response(request, env)
+
+            progress = await get_current_user_progress(env, request)
+            return json_response(progress, request=request, env=env)
+
         if method != "GET":
             return _method_not_allowed_response(request, env)
 
@@ -198,6 +224,8 @@ async def route_request(request: Any, env: Any) -> Any:
                         "session": "/api/auth/session",
                         "profile": "/api/me/profile",
                         "favorites": "/api/me/favorites",
+                        "completedCourses": "/api/me/completed-courses",
+                        "progress": "/api/me/progress",
                         "courses": "/api/courses?limit=50",
                         "courseDetail": "/api/courses/<id>",
                         "catalogCourses": "/api/catalog/courses?limit=100",
@@ -411,6 +439,14 @@ async def route_request(request: Any, env: Any) -> Any:
     except FavoriteUpdateError as exc:
         return error_response(
             code="favorite_update_error",
+            message=str(exc),
+            request=request,
+            env=env,
+            status=400,
+        )
+    except CompletedCourseUpdateError as exc:
+        return error_response(
+            code="completed_course_update_error",
             message=str(exc),
             request=request,
             env=env,

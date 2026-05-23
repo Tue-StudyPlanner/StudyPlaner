@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { CourseCard } from '../../../shared/components/CourseCard'
+import { useAuth } from '../../auth'
 import { useFavorites } from '../../favorites'
 import { useCatalogCourses } from '../hooks/useCatalogCourses'
 
 export function CoursesOverview() {
   const [search, setSearch] = useState<string>('')
+  const { isAuthenticated } = useAuth()
   const { courses, isLoading, error } = useCatalogCourses(search)
   const {
     isFavorite,
@@ -18,6 +20,12 @@ export function CoursesOverview() {
     <div className="p-8">
       <h2 className="mb-2 text-2xl font-bold">Course Catalog</h2>
       <p className="mb-6 text-fg-mid">Browse the Informatics catalog from the database.</p>
+
+      {!isAuthenticated ? (
+        <div className="mb-4 rounded-[10px] border border-border bg-surface px-4 py-3 text-[13px] text-fg-muted">
+          Public browsing is enabled. You only need an account for personal features such as favorites and progress.
+        </div>
+      ) : null}
 
       {favoritesError ? (
         <div className="mb-4 rounded-[10px] border border-border bg-surface px-4 py-3 text-[13px] text-primary">
