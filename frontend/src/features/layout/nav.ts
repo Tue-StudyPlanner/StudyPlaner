@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react'
-import { DashboardIcon, CatalogIcon, FavoritesIcon, TranscriptIcon } from './components/icons'
+import { AccountIcon, CatalogIcon, DashboardIcon, FavoritesIcon, TranscriptIcon } from './components/icons'
 import { ROUTES, type RoutePath } from '../routes'
 
 export interface NavEntry {
@@ -9,8 +9,9 @@ export interface NavEntry {
 }
 
 export const NAV: NavEntry[] = [
-  { path: ROUTES.dashboard,  label: 'Dashboard',  Icon: DashboardIcon  },
-  { path: ROUTES.catalog,    label: 'Catalog',    Icon: CatalogIcon    },
-  { path: ROUTES.favorites,  label: 'Favorites',  Icon: FavoritesIcon  },
+  { path: ROUTES.dashboard, label: 'Dashboard', Icon: DashboardIcon },
+  { path: ROUTES.catalog, label: 'Catalog', Icon: CatalogIcon },
+  { path: ROUTES.favorites, label: 'Favorites', Icon: FavoritesIcon },
   { path: ROUTES.transcript, label: 'Transcript', Icon: TranscriptIcon },
+  { path: ROUTES.account, label: 'Account', Icon: AccountIcon },
 ]

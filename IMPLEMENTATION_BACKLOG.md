@@ -16,6 +16,8 @@ This file is the persistent checklist for upcoming product work.
 - The Worker API already exposes `GET /api/courses`, `GET /api/courses/<id>`, and `GET /api/study-programs`.
 - Favorites are currently stored only in browser `localStorage`.
 - Completed courses / transcript state are currently stored only in browser `localStorage`.
+- The signed-out visitor flow is not yet explicitly hardened; personalized areas still need clear empty states without mandatory login.
+- There is no semester-specific weekly planner yet.
 
 ## Suggested implementation order
 
@@ -24,13 +26,15 @@ This file is the persistent checklist for upcoming product work.
 3. Accounts and personal data foundation
 4. Favorites persistence
 5. Study-progress calculation and visualization
-6. Transcript of Records planning, later implementation
+6. Semester planner / weekly schedule
+7. Transcript of Records planning, later implementation
 
 ## Dependencies
 
 - Section 4 depends on section 3.
 - Section 5 depends on sections 2 and 3.
-- Section 6 should stay parked until sections 1 to 5 are stable enough.
+- Section 6 depends on sections 2, 3, 4, and 5.
+- Section 7 should stay parked until sections 1 to 6 are stable enough.
 
 ## 1. Database-backed course catalog
 
@@ -39,6 +43,8 @@ This file is the persistent checklist for upcoming product work.
 - [x] 1.3 Switch the frontend course overview from `backend/data/courses.json` to the Worker API.
 - [x] 1.4 Switch course detail and related catalog views to the API-backed flow.
 - [x] 1.5 Remove the remaining mock-data dependency from the catalog path.
+- [ ] 1.6 Reconcile the remaining `backend/data/courses.json` bootstrap usage with the completed API migration and document which entry points still show mock data.
+- [ ] 1.7 Ensure first-time signed-out visitors load the public catalog only from API/database data, without any personal setup.
 
 ## 2. Examination regulations and study-program mapping
 
@@ -50,11 +56,13 @@ This file is the persistent checklist for upcoming product work.
 
 ## 3. Accounts and personal data foundation
 
-- [ ] 3.1 Decide and document the authentication approach.
-- [ ] 3.2 Add the database migration for users, profiles, and personal study data.
-- [ ] 3.3 Implement backend account creation, sign-in, and session handling.
-- [ ] 3.4 Implement the frontend account flow.
-- [ ] 3.5 Store the user's selected study program and regulation in the profile.
+- [x] 3.1 Decide and document the authentication approach.
+- [x] 3.2 Add the database migration for users, profiles, and personal study data.
+- [x] 3.3 Implement backend account creation, sign-in, and session handling.
+- [x] 3.4 Implement the frontend account flow.
+- [x] 3.5 Store the user's selected study program and regulation in the profile.
+- [ ] 3.6 Make authentication optional for browsing so signed-out visitors can still see the full public course and study-program data.
+- [ ] 3.7 Add signed-out empty states for favorites, progress, and other personalized modules instead of forcing account creation.
 
 ## 4. Favorites persistence
 
@@ -71,12 +79,23 @@ This file is the persistent checklist for upcoming product work.
 - [ ] 5.5 Build the specialization-circle visualization in the frontend.
 - [ ] 5.6 Connect the visualization to persisted user data.
 
-## 6. Later: Transcript of Records import
+## 6. Semester planner / weekly schedule
 
-- [ ] 6.1 Define scope, privacy requirements, and acceptance criteria for transcript PDF upload.
-- [ ] 6.2 Evaluate PDF extraction and parsing options.
-- [ ] 6.3 Design the matching workflow between transcript entries and known courses.
-- [ ] 6.4 Define how uncertain matches are reviewed and confirmed by the student.
-- [ ] 6.5 Implement transcript upload, matching, and progress sync.
+- [ ] 6.1 Define the minimum data model and API for semester-specific weekly plans per account.
+- [ ] 6.2 Add a planning mode that shows the user's favorite courses as draggable schedule candidates.
+- [ ] 6.3 Build drag-and-drop placement into a weekly grid with course times and overlap highlighting.
+- [ ] 6.4 Show live planning feedback, for example elective-block coverage, ECTS totals, and scheduled course times, while editing.
+- [ ] 6.5 Add semester switching and persist one saved plan per semester in the account.
+- [ ] 6.6 Add an explicit edit button that reveals the favorites list only in planning mode.
+- [ ] 6.7 Keep the favorites picker a fixed-size side panel or equally smooth arrow-based flow that fits the existing interaction pattern.
+- [ ] 6.8 Match all planner UI components to the current visual style.
+
+## 7. Later: Transcript of Records import
+
+- [ ] 7.1 Define scope, privacy requirements, and acceptance criteria for transcript PDF upload.
+- [ ] 7.2 Evaluate PDF extraction and parsing options.
+- [ ] 7.3 Design the matching workflow between transcript entries and known courses.
+- [ ] 7.4 Define how uncertain matches are reviewed and confirmed by the student.
+- [ ] 7.5 Implement transcript upload, matching, and progress sync.
 
 > Hold this section until the earlier foundations are stable.

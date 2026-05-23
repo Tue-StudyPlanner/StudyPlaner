@@ -8,7 +8,7 @@ from workers import Response
 from env_config import get_allowed_origins, is_origin_allowed
 
 
-def _get_request_header(request: Any, header_name: str) -> str | None:
+def get_request_header(request: Any, header_name: str) -> str | None:
     headers = getattr(request, "headers", None)
     if headers is None:
         return None
@@ -28,11 +28,11 @@ def _get_request_header(request: Any, header_name: str) -> str | None:
 def build_cors_headers(request: Any, env: Any) -> dict[str, str]:
     """Build CORS headers based on the configured allow-list."""
     allowed_origins = get_allowed_origins(env)
-    request_origin = _get_request_header(request, "Origin")
+    request_origin = get_request_header(request, "Origin")
 
     headers: dict[str, str] = {
-        "access-control-allow-methods": "GET,OPTIONS",
-        "access-control-allow-headers": "Content-Type",
+        "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+        "access-control-allow-headers": "Authorization, Content-Type",
     }
 
     if "*" in allowed_origins:

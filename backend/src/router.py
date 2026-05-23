@@ -5,6 +5,19 @@ from urllib.parse import parse_qs, urlparse
 
 from db.d1 import D1ExecutionError, fetch_all, fetch_one, has_database
 from http_utils import empty_response, error_response, json_response
+from request_utils import RequestBodyError, read_json_object
+from services.authentication import (
+    AuthenticationError,
+    AuthorizationError,
+    ProfileUpdateError,
+    RegistrationError,
+    get_authenticated_user,
+    get_current_user_profile,
+    login_user,
+    logout_user,
+    register_user,
+    update_current_user_profile,
+)
 from services.course_catalog import (
     get_catalog_course_detail,
     get_course_detail,
@@ -84,6 +97,16 @@ async def _list_study_programs(env: Any) -> list[dict[str, Any]]:
     return await fetch_all(env, sql)
 
 
+def _method_not_allowed_response(request: Any, env: Any) -> Any:
+    return error_response(
+        code="method_not_allowed",
+        message="The requested route does not support this HTTP method.",
+        request=request,
+        env=env,
+        status=405,
+    )
+
+
 async def route_request(request: Any, env: Any) -> Any:
     """Route incoming Cloudflare Worker requests."""
     method = str(getattr(request, "method", "GET")).upper()
@@ -92,16 +115,59 @@ async def route_request(request: Any, env: Any) -> Any:
 
     if method == "OPTIONS":
         return empty_response(request, env)
-    if method != "GET":
-        return error_response(
-            code="method_not_allowed",
-            message="Only GET and OPTIONS are supported in the initial Cloudflare migration.",
-            request=request,
-            env=env,
-            status=405,
-        )
 
     try:
+        if path == "/api/auth/register":
+            if method != "POST":
+                return _method_not_allowed_response(request, env)
+
+            auth_payload = await register_user(env, await read_json_object(request), request)
+            return json_response(auth_payload, request=request, env=env, status=201)
+
+        if path == "/api/auth/login":
+            if method != "POST":
+                return _method_not_allowed_response(request, env)
+
+            auth_payload = await login_user(env, await read_json_object(request), request)
+            return json_response(auth_payload, request=request, env=env)
+
+        if path == "/api/auth/logout":
+            if method != "POST":
+                return _method_not_allowed_response(request, env)
+
+            await logout_user(env, request)
+            return empty_response(request=request, env=env)
+
+        if path == "/api/auth/session":
+            if method != "GET":
+                return _method_not_allowed_response(request, env)
+
+            user = await get_authenticated_user(env, request)
+            return json_response(
+                {
+                    "authenticated": user is not None,
+                    "user": user,
+                },
+                request=request,
+                env=env,
+            )
+
+        if path == "/api/me/profile":
+            if method == "GET":
+                profile = await get_current_user_profile(env, request)
+                return json_response({"user": profile}, request=request, env=env)
+            if method == "PATCH":
+                profile = await update_current_user_profile(
+                    env,
+                    request,
+                    await read_json_object(request),
+                )
+                return json_response({"user": profile}, request=request, env=env)
+            return _method_not_allowed_response(request, env)
+
+        if method != "GET":
+            return _method_not_allowed_response(request, env)
+
         if path == "/":
             return json_response(
                 {
@@ -109,6 +175,10 @@ async def route_request(request: Any, env: Any) -> Any:
                     "status": "ready",
                     "routes": {
                         "health": "/health",
+                        "register": "/api/auth/register",
+                        "login": "/api/auth/login",
+                        "session": "/api/auth/session",
+                        "profile": "/api/me/profile",
                         "courses": "/api/courses?limit=50",
                         "courseDetail": "/api/courses/<id>",
                         "catalogCourses": "/api/catalog/courses?limit=100",
@@ -295,6 +365,46 @@ async def route_request(request: Any, env: Any) -> Any:
                 request=request,
                 env=env,
             )
+    except RequestBodyError as exc:
+        return error_response(
+            code="invalid_request_body",
+            message=str(exc),
+            request=request,
+            env=env,
+            status=400,
+        )
+    except RegistrationError as exc:
+        return error_response(
+            code="registration_error",
+            message=str(exc),
+            request=request,
+            env=env,
+            status=400,
+        )
+    except ProfileUpdateError as exc:
+        return error_response(
+            code="profile_update_error",
+            message=str(exc),
+            request=request,
+            env=env,
+            status=400,
+        )
+    except AuthenticationError as exc:
+        return error_response(
+            code="authentication_failed",
+            message=str(exc),
+            request=request,
+            env=env,
+            status=401,
+        )
+    except AuthorizationError as exc:
+        return error_response(
+            code="authorization_failed",
+            message=str(exc),
+            request=request,
+            env=env,
+            status=401,
+        )
     except D1ExecutionError as exc:
         return error_response(
             code="database_error",

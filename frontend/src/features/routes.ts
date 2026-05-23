@@ -4,6 +4,7 @@ export const ROUTES = {
   catalogDetail: '/catalog/:courseId',
   favorites: '/favorites',
   transcript: '/transcript',
+  account: '/account',
 } as const
 
 export type RoutePath = typeof ROUTES[keyof typeof ROUTES]
