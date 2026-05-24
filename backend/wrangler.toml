@@ -6,7 +6,7 @@ workers_dev = true
 
 [vars]
 ENVIRONMENT = "production"
-ALLOWED_ORIGINS = "https://studyplaner.pages.dev,http://localhost:5173"
+ALLOWED_ORIGINS = "https://studyplaner.pages.dev,https://*.studyplaner.pages.dev,http://localhost:5173"
 
 [[d1_databases]]
 binding = "DB"

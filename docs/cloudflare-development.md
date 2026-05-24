@@ -4,7 +4,7 @@ Short daily workflow for teammates and agents.
 
 ## Current setup
 
-- Branch for Cloudflare work: `cloudflare-migration-test`
+- Use short-lived feature branches for work under test, then merge into `main` once production-ready.
 - Frontend: Cloudflare Pages from `frontend/`
 - Backend: Cloudflare Worker from `backend/`
 - Database: Cloudflare D1 bound as `DB`
@@ -53,7 +53,7 @@ npx wrangler d1 execute studyplaner-db --local --file .tmp/d1-seed.sql
 ### Push branch changes
 
 ```bash
-git push origin cloudflare-migration-test
+git push origin <feature-branch>
 ```
 
 ### Deploy the Worker
@@ -77,6 +77,12 @@ Important variables:
 - `VITE_API_BASE_URL`
 - `ALLOWED_ORIGINS`
 - D1 binding `DB`
+
+For Pages preview deployments, `ALLOWED_ORIGINS` should allow both the production Pages origin and preview subdomains, for example:
+
+```text
+https://studyplaner.pages.dev,https://*.studyplaner.pages.dev
+```
 
 ## Smoke tests
 

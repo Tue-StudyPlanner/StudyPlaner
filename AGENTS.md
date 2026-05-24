@@ -8,6 +8,7 @@ Project-wide instructions for AI coding agents.
 - Do not over-engineer. Add abstractions only when they remove real duplication or complexity.
 - Keep changes focused, reviewable, and easy to revert.
 - Prefer readability over cleverness.
+- Keep feature files lean; split components, hooks, or utilities before a file becomes hard to scan.
 - Follow existing project patterns before introducing new ones.
 - Ask before adding new production dependencies.
 - Never commit secrets, tokens, passwords, private keys, or generated credentials.
@@ -34,8 +35,9 @@ Before changing code:
 
 After changing code:
 1. Run or suggest the relevant test, lint, or typecheck command.
-2. Summarize what changed.
-3. Mention any risk, assumption, or follow-up.
+2. Update or remove affected documentation in the same change so repo guidance stays current.
+3. Summarize what changed.
+4. Mention any risk, assumption, or follow-up.
 
 ## Agent profiles
 

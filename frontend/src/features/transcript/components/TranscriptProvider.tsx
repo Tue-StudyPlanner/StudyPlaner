@@ -5,6 +5,7 @@ import { useAuth } from '../../auth'
 import type { CompletedCourse, MasterCat } from '../../courses'
 import { fetchCompletedCourses, saveCompletedCourses } from '../api'
 import { TranscriptContext } from '../TranscriptContext'
+import type { TranscriptSaveResult } from '../types'
 
 interface TranscriptProviderProps {
   children: ReactNode
@@ -18,6 +19,28 @@ function normalizeErrorMessage(error: unknown): string {
     return error.message
   }
   return 'Failed to synchronize completed courses.'
+}
+
+function normalizeCompletedCourseKey(course: Pick<CompletedCourse, 'courseId' | 'title' | 'semester' | 'ects' | 'grade'>): string {
+  if (course.courseId) {
+    return `course:${course.courseId}`
+  }
+
+  return [
+    'manual',
+    course.title.trim().toLowerCase(),
+    course.semester.trim().toLowerCase(),
+    String(course.ects),
+    course.grade === null ? 'no-grade' : String(course.grade),
+  ].join(':')
+}
+
+function emptySaveResult(): TranscriptSaveResult {
+  return {
+    saved: false,
+    addedCount: 0,
+    skippedDuplicateCount: 0,
+  }
 }
 
 export function TranscriptProvider({ children }: TranscriptProviderProps): JSX.Element {
@@ -67,10 +90,10 @@ export function TranscriptProvider({ children }: TranscriptProviderProps): JSX.E
     }
   }, [token])
 
-  function persistCompletedCourses(nextCompletedCourses: CompletedCourse[]): void {
+  async function persistCompletedCourses(nextCompletedCourses: CompletedCourse[]): Promise<boolean> {
     if (!token) {
       setCompletedCoursesError('Sign in to save completed courses and progress.')
-      return
+      return false
     }
 
     const previousCompletedCourses = completedCourses
@@ -78,49 +101,81 @@ export function TranscriptProvider({ children }: TranscriptProviderProps): JSX.E
     setCompletedCoursesError(null)
     setIsSavingCompletedCourses(true)
 
-    void saveCompletedCourses(token, nextCompletedCourses)
-      .then((savedCompletedCourses) => {
-        setCompletedCourses(savedCompletedCourses)
-      })
-      .catch((error) => {
-        setCompletedCourses(previousCompletedCourses)
-        setCompletedCoursesError(normalizeErrorMessage(error))
-      })
-      .finally(() => {
-        setIsSavingCompletedCourses(false)
-      })
+    try {
+      const savedCompletedCourses = await saveCompletedCourses(token, nextCompletedCourses)
+      setCompletedCourses(savedCompletedCourses)
+      return true
+    } catch (error) {
+      setCompletedCourses(previousCompletedCourses)
+      setCompletedCoursesError(normalizeErrorMessage(error))
+      return false
+    } finally {
+      setIsSavingCompletedCourses(false)
+    }
   }
 
-  const addCompletedCourse = (course: CompletedCourse): void => {
-    if (
-      course.courseId &&
-      completedCourses.some((completedCourse) => completedCourse.courseId === course.courseId)
-    ) {
-      setCompletedCoursesError('This course is already listed as completed.')
-      return
+  async function addCompletedCourses(courses: CompletedCourse[]): Promise<TranscriptSaveResult> {
+    if (courses.length === 0) {
+      return emptySaveResult()
     }
 
-    persistCompletedCourses([...completedCourses, course])
+    const existingKeys = new Set(completedCourses.map(normalizeCompletedCourseKey))
+    const seenNewKeys = new Set<string>()
+    const nextCoursesToAppend: CompletedCourse[] = []
+
+    for (const course of courses) {
+      const key = normalizeCompletedCourseKey(course)
+      if (existingKeys.has(key) || seenNewKeys.has(key)) {
+        continue
+      }
+      seenNewKeys.add(key)
+      nextCoursesToAppend.push(course)
+    }
+
+    const skippedDuplicateCount = courses.length - nextCoursesToAppend.length
+    if (nextCoursesToAppend.length === 0) {
+      setCompletedCoursesError('The selected course data is already stored in your completed-course list.')
+      return {
+        saved: false,
+        addedCount: 0,
+        skippedDuplicateCount,
+      }
+    }
+
+    const saved = await persistCompletedCourses([...completedCourses, ...nextCoursesToAppend])
+    return {
+      saved,
+      addedCount: saved ? nextCoursesToAppend.length : 0,
+      skippedDuplicateCount,
+    }
   }
 
-  const removeCourse = (courseId: string): void => {
-    persistCompletedCourses(completedCourses.filter((course) => course.id !== courseId))
+  async function addCompletedCourse(course: CompletedCourse): Promise<TranscriptSaveResult> {
+    return await addCompletedCourses([course])
   }
 
-  const setCategory = (courseId: string, masterCat: MasterCat): void => {
-    persistCompletedCourses(
+  async function removeCourse(courseId: string): Promise<boolean> {
+    return await persistCompletedCourses(completedCourses.filter((course) => course.id !== courseId))
+  }
+
+  async function setCategory(courseId: string, masterCat: MasterCat): Promise<boolean> {
+    return await persistCompletedCourses(
       completedCourses.map((course) =>
         course.id === courseId ? { ...course, masterCat } : course,
       ),
     )
   }
 
-  const updateCourse = (courseId: string, updates: Partial<CompletedCourse>): void => {
-    persistCompletedCourses(
+  async function updateCourse(courseId: string, updates: Partial<CompletedCourse>): Promise<boolean> {
+    return await persistCompletedCourses(
       completedCourses.map((course) =>
         course.id === courseId ? { ...course, ...updates } : course,
       ),
     )
+  }
+
+  function clearCompletedCoursesError(): void {
+    setCompletedCoursesError(null)
   }
 
   return (
@@ -131,9 +186,11 @@ export function TranscriptProvider({ children }: TranscriptProviderProps): JSX.E
         isSavingCompletedCourses,
         completedCoursesError,
         addCompletedCourse,
+        addCompletedCourses,
         removeCourse,
         setCategory,
         updateCourse,
+        clearCompletedCoursesError,
       }}
     >
       {children}

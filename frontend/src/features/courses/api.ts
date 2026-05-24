@@ -6,8 +6,8 @@ interface CatalogCoursesResponse {
   courses: Course[]
 }
 
-export async function fetchCatalogCourses(search?: string): Promise<Course[]> {
-  const query = new URLSearchParams({ limit: '120' })
+export async function fetchCatalogCourses(search?: string, limit: number = 200): Promise<Course[]> {
+  const query = new URLSearchParams({ limit: String(limit) })
   if (search?.trim()) {
     query.set('q', search.trim())
   }

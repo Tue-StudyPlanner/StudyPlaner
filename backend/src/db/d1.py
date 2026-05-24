@@ -7,18 +7,15 @@ class D1ExecutionError(RuntimeError):
     """Raised when a D1 binding is missing or a query fails."""
 
 
-
 def _get_database(env: Any) -> Any | None:
     if isinstance(env, dict):
-        return env.get("DB")
-    return getattr(env, "DB", None)
-
+        return env.get('DB')
+    return getattr(env, 'DB', None)
 
 
 def has_database(env: Any) -> bool:
     """Return whether the Cloudflare D1 binding exists."""
     return _get_database(env) is not None
-
 
 
 def _require_database(env: Any) -> Any:
@@ -28,27 +25,52 @@ def _require_database(env: Any) -> Any:
     return database
 
 
+def _materialize_nullable_params(sql: str, params: list[Any]) -> tuple[str, list[Any]]:
+    placeholder_count = sql.count('?')
+    if placeholder_count != len(params):
+        raise D1ExecutionError(
+            f'D1 placeholder count mismatch: expected {placeholder_count} params, received {len(params)}.'
+        )
+
+    sql_parts = sql.split('?')
+    normalized_sql = sql_parts[0]
+    normalized_params: list[Any] = []
+
+    for index, param in enumerate(params):
+        if param is None:
+            normalized_sql += 'NULL'
+        else:
+            normalized_sql += '?'
+            normalized_params.append(param)
+        normalized_sql += sql_parts[index + 1]
+
+    return normalized_sql, normalized_params
+
 
 def _bind_statement(statement: Any, params: list[Any]) -> Any:
     if not params:
         return statement
 
-    bind = getattr(statement, "bind", None)
+    bind = getattr(statement, 'bind', None)
     if not callable(bind):
-        raise D1ExecutionError("The D1 statement object does not expose a bind() method.")
+        raise D1ExecutionError('The D1 statement object does not expose a bind() method.')
 
     try:
         return bind(*params)
     except TypeError:
         bound_statement = statement
-        for value in params:
-            bound_statement = getattr(bound_statement, "bind")(value)
+        try:
+            for value in params:
+                bound_statement = getattr(bound_statement, 'bind')(value)
+        except Exception as exc:  # pragma: no cover - runtime-specific integration
+            raise D1ExecutionError(f'D1 parameter binding failed: {exc}') from exc
         return bound_statement
-
+    except Exception as exc:  # pragma: no cover - runtime-specific integration
+        raise D1ExecutionError(f'D1 parameter binding failed: {exc}') from exc
 
 
 def _to_python(value: Any) -> Any:
-    converter = getattr(value, "to_py", None)
+    converter = getattr(value, 'to_py', None)
     if callable(converter):
         try:
             return converter()
@@ -57,17 +79,15 @@ def _to_python(value: Any) -> Any:
     return value
 
 
-
 def _normalize_row(row: Any) -> dict[str, Any]:
     row = _to_python(row)
     if isinstance(row, dict):
         return row
-    if hasattr(row, "items"):
+    if hasattr(row, 'items'):
         return {str(key): value for key, value in row.items()}
-    if hasattr(row, "__dict__"):
+    if hasattr(row, '__dict__'):
         return {str(key): value for key, value in vars(row).items()}
-    return {"value": row}
-
+    return {'value': row}
 
 
 def _extract_rows(result: Any) -> list[dict[str, Any]]:
@@ -77,14 +97,14 @@ def _extract_rows(result: Any) -> list[dict[str, Any]]:
     if isinstance(result, list):
         return [_normalize_row(row) for row in result]
     if isinstance(result, dict):
-        rows = _to_python(result.get("results"))
+        rows = _to_python(result.get('results'))
         if isinstance(rows, list):
             return [_normalize_row(row) for row in rows]
-        if "results" not in result:
+        if 'results' not in result:
             return [_normalize_row(result)]
         return []
 
-    rows = _to_python(getattr(result, "results", None))
+    rows = _to_python(getattr(result, 'results', None))
     if isinstance(rows, list):
         return [_normalize_row(row) for row in rows]
 
@@ -98,13 +118,16 @@ async def fetch_all(
 ) -> list[dict[str, Any]]:
     """Execute a SELECT query and return all rows."""
     database = _require_database(env)
-    prepared_statement = database.prepare(sql)
-    bound_statement = _bind_statement(prepared_statement, params or [])
 
     try:
+        normalized_sql, normalized_params = _materialize_nullable_params(sql, params or [])
+        prepared_statement = database.prepare(normalized_sql)
+        bound_statement = _bind_statement(prepared_statement, normalized_params)
         result = await bound_statement.all()
+    except D1ExecutionError:
+        raise
     except Exception as exc:  # pragma: no cover - runtime-specific integration
-        raise D1ExecutionError(f"D1 query failed: {exc}") from exc
+        raise D1ExecutionError(f'D1 query failed: {exc}') from exc
 
     return _extract_rows(result)
 
@@ -122,10 +145,13 @@ async def fetch_one(
 async def execute(env: Any, sql: str, params: list[Any] | None = None) -> Any:
     """Execute a write query and return the raw D1 result."""
     database = _require_database(env)
-    prepared_statement = database.prepare(sql)
-    bound_statement = _bind_statement(prepared_statement, params or [])
 
     try:
+        normalized_sql, normalized_params = _materialize_nullable_params(sql, params or [])
+        prepared_statement = database.prepare(normalized_sql)
+        bound_statement = _bind_statement(prepared_statement, normalized_params)
         return await bound_statement.run()
+    except D1ExecutionError:
+        raise
     except Exception as exc:  # pragma: no cover - runtime-specific integration
-        raise D1ExecutionError(f"D1 statement failed: {exc}") from exc
+        raise D1ExecutionError(f'D1 statement failed: {exc}') from exc
