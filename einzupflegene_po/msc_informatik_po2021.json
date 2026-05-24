@@ -1,0 +1,88 @@
+{
+  "studiengang": "Master of Science Informatik / Computer Science",
+  "abschluss": "M.Sc.",
+  "universitaet": "Eberhard Karls Universität Tübingen",
+  "pruefungsordnung": "PO2021",
+  "po_datum": "22.07.2022",
+  "regelstudienzeit_semester": 4,
+  "gesamt_ects": 120,
+  "quelle": "https://uni-tuebingen.de/de/74487",
+  "zulassung_hinweis": "Zulassungsbeschränkt ab WS 2021/22; Bachelornote 2,5 oder besser erforderlich",
+
+  "module": [
+
+    {
+      "bereich": "Pflichtbereich",
+      "hinweis": "Pflichtmodule im MSc variieren je nach gewähltem Schwerpunkt; folgende sind typisch verpflichtend",
+      "module": [
+        {
+          "id": "MINF-MSC-PRO",
+          "name": "Seminar / Oberseminar",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        }
+      ]
+    },
+
+    {
+      "bereich": "Wahlpflicht Informatik",
+      "gesamt_ects_bereich": 72,
+      "hinweis": "Mindestens je ein Modul aus drei verschiedenen Bereichen (PI, TI, ThI); Gesamt 72 ECTS aus Wahlpflichtmodulen des Fachbereichs",
+      "module": [
+        {
+          "id": "MINF-MSC-WP-PI",
+          "name": "Wahlpflichtfach Praktische Informatik (mindestens 1 Modul)",
+          "ects_min": 6,
+          "typ": "Wahlpflicht"
+        },
+        {
+          "id": "MINF-MSC-WP-TI",
+          "name": "Wahlpflichtfach Technische Informatik (mindestens 1 Modul)",
+          "ects_min": 6,
+          "typ": "Wahlpflicht"
+        },
+        {
+          "id": "MINF-MSC-WP-THI",
+          "name": "Wahlpflichtfach Theoretische Informatik (mindestens 1 Modul)",
+          "ects_min": 6,
+          "typ": "Wahlpflicht"
+        },
+        {
+          "id": "MINF-MSC-WP-FREE",
+          "name": "Weitere Wahlpflichtmodule Informatik (frei aus Gesamtkatalog)",
+          "ects": 54,
+          "typ": "Wahlpflicht"
+        }
+      ]
+    },
+
+    {
+      "bereich": "Schwerpunkt / Anwendungsfach",
+      "gesamt_ects_bereich": 18,
+      "hinweis": "Frei wählbares Anwendungsfach oder allgemeiner Wahlbereich (wie im Bachelor)",
+      "module": [
+        {
+          "id": "MINF-MSC-SP",
+          "name": "Schwerpunktfach / Anwendungsbereich",
+          "ects": 18,
+          "typ": "Wahlpflicht"
+        }
+      ]
+    },
+
+    {
+      "bereich": "Abschluss",
+      "module": [
+        {
+          "id": "MINF-MSC-MA",
+          "name": "Masterarbeit inkl. Vortrag",
+          "ects": 30,
+          "typ": "Pflicht",
+          "semester_empfohlen": 4,
+          "bearbeitungszeit_monate": 6
+        }
+      ]
+    }
+  ]
+}

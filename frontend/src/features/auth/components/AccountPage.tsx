@@ -1,13 +1,15 @@
 import type { FormEvent } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../../shared/utils/api'
-import { fetchRegulationVersions, fetchStudyPrograms } from '../api'
+import { fetchStudyPrograms } from '../api'
 import { useAuth } from '../hooks/useAuth'
-import type { RegulationVersionOption, StudyProgramOption } from '../types'
+import type { StudyProgramOption } from '../types'
 import { ROUTES } from '../../routes'
 
 type AuthMode = 'login' | 'register'
+
+const EARLIEST_SEMESTER = 'WS 2021/22'
 
 function getCurrentSemester(): string {
   const now = new Date()
@@ -18,21 +20,24 @@ function getCurrentSemester(): string {
   return `WS ${ws}/${String(ws + 1).slice(-2)}`
 }
 
-function generateStartSemesters(count: number): string[] {
+function generateStartSemesters(): string[] {
   const now = new Date()
   const month = now.getMonth() + 1
   const year = now.getFullYear()
   let isSummer = month >= 4 && month <= 9
   let y = isSummer ? year : (month >= 10 ? year : year - 1)
   const list: string[] = []
-  for (let i = 0; i < count; i++) {
-    list.push(isSummer ? `SS ${y}` : `WS ${y}/${String(y + 1).slice(-2)}`)
+  while (true) {
+    const sem = isSummer ? `SS ${y}` : `WS ${y}/${String(y + 1).slice(-2)}`
+    list.push(sem)
+    if (sem === EARLIEST_SEMESTER) break
     if (isSummer) {
       isSummer = false
     } else {
       y -= 1
       isSummer = true
     }
+    if (y < 2015) break
   }
   return list
 }
@@ -61,24 +66,9 @@ export function AccountPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [studyPrograms, setStudyPrograms] = useState<StudyProgramOption[]>([])
-  const [regulationVersions, setRegulationVersions] = useState<RegulationVersionOption[]>([])
   const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(false)
-  const [selectedStudyProgramId, setSelectedStudyProgramId] = useState<number | null>(null)
-  const [selectedRegulationVersionId, setSelectedRegulationVersionId] = useState<number | null>(null)
-  const [currentSemesterLabel, setCurrentSemesterLabel] = useState<string>('')
-
-  useEffect(() => {
-    if (!user) {
-      setSelectedStudyProgramId(null)
-      setSelectedRegulationVersionId(null)
-      setCurrentSemesterLabel('')
-      return
-    }
-
-    setSelectedStudyProgramId(user.profile.studyProgramId)
-    setSelectedRegulationVersionId(user.profile.regulationVersionId)
-    setCurrentSemesterLabel(user.profile.currentSemesterLabel ?? '')
-  }, [user])
+  const [draftStudyProgramId, setDraftStudyProgramId] = useState<number | null | undefined>(undefined)
+  const [draftCurrentSemesterLabel, setDraftCurrentSemesterLabel] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     let isActive = true
@@ -86,15 +76,11 @@ export function AccountPage() {
     async function loadOptions(): Promise<void> {
       setIsLoadingOptions(true)
       try {
-        const [nextStudyPrograms, nextRegulationVersions] = await Promise.all([
-          fetchStudyPrograms(),
-          fetchRegulationVersions(),
-        ])
+        const nextStudyPrograms = await fetchStudyPrograms()
         if (!isActive) {
           return
         }
         setStudyPrograms(nextStudyPrograms)
-        setRegulationVersions(nextRegulationVersions)
       } catch (loadError) {
         if (!isActive) {
           return
@@ -114,29 +100,9 @@ export function AccountPage() {
     }
   }, [])
 
-  const selectedStudyProgram = useMemo(
-    () => studyPrograms.find((program) => program.id === selectedStudyProgramId) ?? null,
-    [selectedStudyProgramId, studyPrograms],
-  )
-
-  useEffect(() => {
-    if (!selectedStudyProgram) {
-      return
-    }
-
-    if (
-      selectedStudyProgram.defaultRegulationVersionCode &&
-      regulationVersions.length > 0 &&
-      selectedStudyProgramId !== user?.profile.studyProgramId
-    ) {
-      const defaultRegulation = regulationVersions.find(
-        (version) => version.code === selectedStudyProgram.defaultRegulationVersionCode,
-      )
-      if (defaultRegulation) {
-        setSelectedRegulationVersionId(defaultRegulation.id)
-      }
-    }
-  }, [regulationVersions, selectedStudyProgram, selectedStudyProgramId, user?.profile.studyProgramId])
+  const selectedStudyProgramId =
+    draftStudyProgramId !== undefined ? draftStudyProgramId : (user?.profile.studyProgramId ?? null)
+  const currentSemesterLabel = draftCurrentSemesterLabel ?? (user?.profile.currentSemesterLabel ?? '')
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
@@ -146,15 +112,23 @@ export function AccountPage() {
 
     try {
       if (mode === 'register') {
-        await register({ identifier, password })
+        await register({
+          identifier,
+          password,
+          studyProgramId: selectedStudyProgramId,
+          currentSemesterLabel: currentSemesterLabel.trim() || null,
+        })
+        setDraftStudyProgramId(undefined)
+        setDraftCurrentSemesterLabel(undefined)
         navigate(ROUTES.dashboard)
         return
       } else {
         await login({ identifier, password })
+        setDraftStudyProgramId(undefined)
+        setDraftCurrentSemesterLabel(undefined)
         navigate(ROUTES.dashboard)
         return
       }
-      setPassword('')
     } catch (submitError) {
       setError(normalizeErrorMessage(submitError))
     } finally {
@@ -168,7 +142,9 @@ export function AccountPage() {
     setMessage(null)
     try {
       await logout()
-      setMessage('Signed out successfully.')
+      setDraftStudyProgramId(undefined)
+      setDraftCurrentSemesterLabel(undefined)
+      navigate(ROUTES.dashboard)
     } catch (logoutError) {
       setError(normalizeErrorMessage(logoutError))
     } finally {
@@ -185,9 +161,10 @@ export function AccountPage() {
     try {
       await saveProfile({
         studyProgramId: selectedStudyProgramId,
-        regulationVersionId: selectedRegulationVersionId,
         currentSemesterLabel: currentSemesterLabel.trim() || null,
       })
+      setDraftStudyProgramId(undefined)
+      setDraftCurrentSemesterLabel(undefined)
       setMessage('Your study profile has been updated.')
     } catch (profileError) {
       setError(normalizeErrorMessage(profileError))
@@ -195,6 +172,8 @@ export function AccountPage() {
       setIsSubmitting(false)
     }
   }
+
+  const startSemesters = generateStartSemesters()
 
   return (
     <div className="p-8">
@@ -245,7 +224,7 @@ export function AccountPage() {
 
           <section className="rounded-[10px] border border-border bg-surface px-6 py-5.5 lg:col-span-2">
             <h2 className="mb-4 text-[14px] font-semibold text-fg">Study profile</h2>
-            <form onSubmit={(event) => void handleProfileSave(event)} className="grid gap-3.5 lg:grid-cols-3">
+            <form onSubmit={(event) => void handleProfileSave(event)} className="grid gap-3.5 lg:grid-cols-2">
               <label className="grid gap-1.5">
                 <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
                   Study program
@@ -253,7 +232,7 @@ export function AccountPage() {
                 <select
                   value={toSelectValue(selectedStudyProgramId)}
                   onChange={(event) =>
-                    setSelectedStudyProgramId(
+                    setDraftStudyProgramId(
                       event.target.value ? Number(event.target.value) : null,
                     )
                   }
@@ -271,49 +250,24 @@ export function AccountPage() {
 
               <label className="grid gap-1.5">
                 <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-                  Regulation version
-                </span>
-                <select
-                  value={toSelectValue(selectedRegulationVersionId)}
-                  onChange={(event) =>
-                    setSelectedRegulationVersionId(
-                      event.target.value ? Number(event.target.value) : null,
-                    )
-                  }
-                  disabled={isLoadingOptions}
-                  className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
-                >
-                  <option value="">Use default regulation</option>
-                  {regulationVersions.map((regulationVersion) => (
-                    <option key={regulationVersion.id} value={regulationVersion.id}>
-                      {regulationVersion.regulationName} · {regulationVersion.versionLabel}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="grid gap-1.5">
-                <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
                   Start semester
                 </span>
                 <select
                   value={currentSemesterLabel}
-                  onChange={(event) => setCurrentSemesterLabel(event.target.value)}
+                  onChange={(event) => setDraftCurrentSemesterLabel(event.target.value)}
                   className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
                 >
                   <option value="">Not specified</option>
-                  {generateStartSemesters(20).map((sem) => (
+                  {startSemesters.map((sem) => (
                     <option key={sem} value={sem}>{sem}</option>
                   ))}
                 </select>
               </label>
 
-              <div className="lg:col-span-3 flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="lg:col-span-2 flex flex-wrap items-center justify-between gap-3 pt-2">
                 <div className="grid gap-0.5">
                   <p className="text-[12.5px] text-fg-muted">
-                    {selectedStudyProgram?.defaultRegulationName && selectedStudyProgram?.defaultRegulationVersionLabel
-                      ? `Default mapping: ${selectedStudyProgram.defaultRegulationName} ${selectedStudyProgram.defaultRegulationVersionLabel}`
-                      : 'The backend will apply the default mapped regulation when available.'}
+                    Choose your study program incl. PO and keep your start semester up to date.
                   </p>
                   <p className="text-[12.5px] text-fg-muted">
                     Current semester (auto-detected): <span className="font-medium text-fg">{getCurrentSemester()}</span>
@@ -387,6 +341,49 @@ export function AccountPage() {
                 />
               </label>
 
+              {mode === 'register' ? (
+                <>
+                  <label className="grid gap-1.5">
+                    <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
+                      Study program
+                    </span>
+                    <select
+                      value={toSelectValue(selectedStudyProgramId)}
+                      onChange={(event) =>
+                        setDraftStudyProgramId(
+                          event.target.value ? Number(event.target.value) : null,
+                        )
+                      }
+                      disabled={isLoadingOptions}
+                      className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
+                    >
+                      <option value="">Select a study program incl. PO</option>
+                      {studyPrograms.map((studyProgram) => (
+                        <option key={studyProgram.id} value={studyProgram.id}>
+                          {studyProgram.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="grid gap-1.5">
+                    <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
+                      Start semester
+                    </span>
+                    <select
+                      value={currentSemesterLabel}
+                      onChange={(event) => setDraftCurrentSemesterLabel(event.target.value)}
+                      className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
+                    >
+                      <option value="">Select your start semester</option>
+                      {startSemesters.map((sem) => (
+                        <option key={sem} value={sem}>{sem}</option>
+                      ))}
+                    </select>
+                  </label>
+                </>
+              ) : null}
+
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -401,7 +398,7 @@ export function AccountPage() {
             <h2 className="mb-3 text-[14px] font-semibold text-fg">What you get with an account</h2>
             <ul className="grid gap-2 pl-5 text-[13.5px] leading-6 text-fg-mid">
               <li className="list-disc">Persist favorite courses across devices</li>
-              <li className="list-disc">Store your selected study program and regulation</li>
+              <li className="list-disc">Store your study program incl. PO and your start semester</li>
               <li className="list-disc">Save completed courses and personal progress</li>
             </ul>
           </section>
@@ -428,14 +425,11 @@ export function AccountPage() {
                     <div className="text-[13px] font-semibold text-fg">{studyProgram.name}</div>
                     <div className="text-[12.5px] text-fg-mid">
                       {studyProgram.degree || 'Degree n/a'}
-                      {studyProgram.poVersion ? ` · PO ${studyProgram.poVersion}` : ''}
+                      {studyProgram.totalEcts ? ` · ${studyProgram.totalEcts} ECTS` : ''}
                     </div>
-                    <div className="text-[12px] text-fg-muted">
-                      Default regulation:{' '}
-                      {studyProgram.defaultRegulationName && studyProgram.defaultRegulationVersionLabel
-                        ? `${studyProgram.defaultRegulationName} ${studyProgram.defaultRegulationVersionLabel}`
-                        : 'not mapped yet'}
-                    </div>
+                    {studyProgram.subject ? (
+                      <div className="text-[12px] text-fg-muted">{studyProgram.subject}</div>
+                    ) : null}
                   </div>
                 ))}
               </div>

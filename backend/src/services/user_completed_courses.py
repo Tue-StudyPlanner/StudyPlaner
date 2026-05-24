@@ -6,7 +6,8 @@ from typing import Any
 from db.d1 import execute, fetch_all
 from services.authentication import require_authenticated_user
 
-ALLOWED_MASTER_CATEGORIES = {'TECH', 'THEO', 'PRAK', 'INFO', 'FOKUS', 'BASIS'}
+ALLOWED_MASTER_CATEGORIES = {'TECH', 'THEO', 'PRAK', 'INFO', 'BASIS'}
+LEGACY_MASTER_CATEGORY_ALIASES = {'FOKUS': 'BASIS'}
 
 
 class CompletedCourseUpdateError(ValueError):
@@ -30,6 +31,13 @@ def _normalize_float(value: Any, *, field_name: str) -> float:
     except (TypeError, ValueError) as exc:
         raise CompletedCourseUpdateError(f'{field_name} must be numeric.') from exc
     return normalized_value
+
+
+def _normalize_master_cat(value: Any) -> str | None:
+    normalized_value = _safe_text(value)
+    if normalized_value is None:
+        return None
+    return LEGACY_MASTER_CATEGORY_ALIASES.get(normalized_value, normalized_value)
 
 
 def _now_unix() -> int:
@@ -86,7 +94,7 @@ async def _serialize_completed_courses(env: Any, user_id: int) -> list[dict[str,
             'externalCourseCode': _safe_text(row.get('externalCourseCode')),
             'title': row['title'],
             'ects': float(row['ects']),
-            'masterCat': row['masterCat'],
+            'masterCat': _normalize_master_cat(row.get('masterCat')),
             'grade': float(row['grade']) if row.get('grade') is not None else None,
             'semester': row['semester'],
             'source': row['source'],
@@ -107,7 +115,7 @@ def _normalize_completed_course(payload: Any) -> CompletedCoursePayload:
     if not semester:
         raise CompletedCourseUpdateError('Each completed course requires a semester label.')
 
-    master_cat = _safe_text(payload.get('masterCat'))
+    master_cat = _normalize_master_cat(payload.get('masterCat'))
     if master_cat not in ALLOWED_MASTER_CATEGORIES:
         raise CompletedCourseUpdateError('Each completed course requires a valid masterCat value.')
 

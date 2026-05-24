@@ -4,6 +4,8 @@ import type { AuthUser } from './types'
 export interface RegisterInput {
   identifier: string
   password: string
+  studyProgramId?: number | null
+  currentSemesterLabel?: string | null
 }
 
 export interface LoginInput {
@@ -13,7 +15,6 @@ export interface LoginInput {
 
 export interface SaveProfileInput {
   studyProgramId: number | null
-  regulationVersionId: number | null
   currentSemesterLabel: string | null
 }
 

@@ -37,7 +37,7 @@ Included now:
 - sign in
 - sign out
 - fetch current session/user
-- store the selected study program and default regulation in the profile
+- store the selected study program including PO plus the start semester in the profile
 
 Not included yet:
 

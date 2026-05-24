@@ -180,7 +180,7 @@ Expected values from the current dataset:
 
 - `courses_count = 1265`
 - `catalog_nodes_count = 18376`
-- `study_programs_count = 3`
+- `study_programs_count = 6`
 
 ### 2.6 Run the Worker locally against the persisted D1 state
 
@@ -208,7 +208,7 @@ Expected result:
 - `/health` returns `ok: true`
 - `/api/courses?limit=2` returns two D1-backed courses
 - `/api/courses/91` returns a populated course detail payload
-- `/api/study-programs` returns three study programs
+- `/api/study-programs` returns six study programs
 
 If this fails, do not continue to remote deployment yet.
 
@@ -274,7 +274,7 @@ Expected values:
 
 - `courses_count = 1265`
 - `catalog_nodes_count = 18376`
-- `study_programs_count = 3`
+- `study_programs_count = 6`
 
 ## Step 7: deploy the Worker test instance
 

@@ -2,7 +2,7 @@ import type { CompletedCourse, MasterCat } from '../../courses'
 import { CategoryToggle } from './CategoryToggle'
 import { CloseIcon } from './icons'
 
-const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'FOKUS', 'BASIS']
+const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'BASIS']
 
 interface SavedCompletedCourseRowProps {
   course: CompletedCourse

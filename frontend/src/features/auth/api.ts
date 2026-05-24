@@ -1,15 +1,11 @@
 import { createAuthHeaders, fetchJson } from '../../shared/utils/api'
-import type {
-  AuthPayload,
-  AuthSessionResponse,
-  AuthUser,
-  RegulationVersionOption,
-  StudyProgramOption,
-} from './types'
+import type { AuthPayload, AuthSessionResponse, AuthUser, StudyProgramOption } from './types'
 
 interface RegisterInput {
   identifier: string
   password: string
+  studyProgramId?: number | null
+  currentSemesterLabel?: string | null
 }
 
 interface LoginInput {
@@ -21,18 +17,19 @@ interface StudyProgramsResponse {
   studyPrograms: StudyProgramOption[]
 }
 
-interface RegulationVersionsResponse {
-  regulationVersions: RegulationVersionOption[]
-}
-
 interface UserResponse {
   user: AuthUser
 }
 
 interface SaveProfileInput {
   studyProgramId: number | null
-  regulationVersionId: number | null
   currentSemesterLabel: string | null
+}
+
+function isSupportedStudyProgram(studyProgram: StudyProgramOption): boolean {
+  return studyProgram.sourceStatus === 'official'
+    && studyProgram.poVersion === '2021'
+    && studyProgram.defaultRegulationVersionLabel === '2021'
 }
 
 export async function registerAccount(input: RegisterInput): Promise<AuthPayload> {
@@ -90,9 +87,7 @@ export async function saveCurrentProfile(
 export async function fetchStudyPrograms(): Promise<StudyProgramOption[]> {
   const response = await fetchJson<StudyProgramsResponse>('/api/study-programs')
   return response.studyPrograms
+    .filter(isSupportedStudyProgram)
+    .sort((left, right) => left.name.localeCompare(right.name))
 }
 
-export async function fetchRegulationVersions(): Promise<RegulationVersionOption[]> {
-  const response = await fetchJson<RegulationVersionsResponse>('/api/regulation-versions')
-  return response.regulationVersions
-}

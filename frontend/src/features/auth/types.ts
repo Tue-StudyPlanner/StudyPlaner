@@ -8,6 +8,7 @@ export interface AuthProfile {
   regulationVersionLabel: string | null
   regulationCode: string | null
   regulationName: string | null
+  totalEcts?: number | null
 }
 
 export interface AuthUser {
@@ -39,22 +40,6 @@ export interface StudyProgramOption {
   defaultRegulationName: string | null
   enrollmentMatch: string | null
   regulationVersionCount: number
-}
-
-export interface RegulationVersionOption {
-  id: number
-  code: string
-  versionLabel: string
-  totalEcts: number | null
-  language: string | null
-  sourceStatus: string
-  notes: string | null
-  regulationCode: string
-  regulationName: string
-  degree: string | null
-  subject: string | null
-  ruleGroupCount: number
-  mappedCourseCount: number
 }
 
 export interface AuthSessionResponse {

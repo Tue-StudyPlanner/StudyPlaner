@@ -6,7 +6,7 @@ import { CatalogCoursePicker } from './CatalogCoursePicker'
 import { CategoryToggle } from './CategoryToggle'
 import { EditIcon, TrashIcon } from './icons'
 
-const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'FOKUS', 'BASIS']
+const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'BASIS']
 
 function formatOptionalNumber(value: number | null): string {
   return value === null ? '' : String(value)
@@ -61,12 +61,14 @@ function statusLabel(status: TranscriptImportCandidate['status']): string {
 
 interface TranscriptImportRowProps {
   candidate: TranscriptImportCandidate
+  studyProgramCode?: string | null
   onChange: (candidate: TranscriptImportCandidate) => void
   onDiscard: () => void
 }
 
 export function TranscriptImportRow({
   candidate,
+  studyProgramCode,
   onChange,
   onDiscard,
 }: TranscriptImportRowProps) {
@@ -152,6 +154,7 @@ export function TranscriptImportRow({
           <CatalogCoursePicker
             selectedCourse={candidate.matchedCourse}
             suggestedCourses={candidate.matchOptions}
+            studyProgramCode={studyProgramCode}
             onSelect={(course) => onChange(applyCatalogCourseMatch(candidate, course))}
           />
 

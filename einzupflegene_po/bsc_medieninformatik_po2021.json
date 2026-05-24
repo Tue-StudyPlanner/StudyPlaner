@@ -1,0 +1,214 @@
+{
+  "studiengang": "Bachelor of Science Medieninformatik",
+  "abschluss": "B.Sc.",
+  "universitaet": "Eberhard Karls Universität Tübingen",
+  "pruefungsordnung": "PO2021",
+  "po_datum": "22.07.2022",
+  "regelstudienzeit_semester": 6,
+  "gesamt_ects": 180,
+  "quelle": "https://uni-tuebingen.de/de/74484",
+  "hinweis": "Interdisziplinärer Studiengang in Kooperation mit dem Institut für Medienwissenschaft",
+
+  "module": [
+
+    {
+      "bereich": "Mathematik (Pflicht)",
+      "module": [
+        {
+          "id": "MINF1110",
+          "name": "Mathematik für Informatik 1: Analysis",
+          "ects": 9,
+          "typ": "Pflicht",
+          "semester_empfohlen": 1
+        },
+        {
+          "id": "MINF1120",
+          "name": "Mathematik für Informatik 2: Lineare Algebra",
+          "ects": 9,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MINF1130",
+          "name": "Mathematik für Informatik 3: Fortgeschrittene Themen",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        }
+      ]
+    },
+
+    {
+      "bereich": "Informatik (Pflicht)",
+      "module": [
+        {
+          "id": "MINF2110",
+          "name": "Praktische Informatik 1: Deklarative Programmierung",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 1
+        },
+        {
+          "id": "MINF2120",
+          "name": "Praktische Informatik 2: Imperative und objektorientierte Programmierung",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MINF2130",
+          "name": "Praktische Informatik 3: Software Engineering",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 4
+        },
+        {
+          "id": "MINF2140",
+          "name": "Praktische Informatik 4: Teamprojekt",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 5
+        },
+        {
+          "id": "MINF3110",
+          "name": "Technische Informatik 1: Digitaltechnik",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 1
+        },
+        {
+          "id": "MINF3120",
+          "name": "Technische Informatik 2: Informatik der Systeme",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        },
+        {
+          "id": "MINF4110",
+          "name": "Theoretische Informatik 1: Algorithmen und Datenstrukturen",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        }
+      ]
+    },
+
+    {
+      "bereich": "Medieninformatik (Pflicht)",
+      "module": [
+        {
+          "id": "MMI-UXD",
+          "name": "User Interface Design / User Experience (UX)",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        },
+        {
+          "id": "MMI-INT",
+          "name": "Einführung in die Internettechnologien",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MMI-MULT",
+          "name": "Grundlagen der Multimediatechnik",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        },
+        {
+          "id": "MMI-BV",
+          "name": "Bildverarbeitung",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 4
+        },
+        {
+          "id": "MMI-GDV",
+          "name": "Graphische Datenverarbeitung",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 4
+        }
+      ]
+    },
+
+    {
+      "bereich": "Medienwissenschaft (Pflicht)",
+      "module": [
+        {
+          "id": "MMW-GL",
+          "name": "Grundlagen der Medienwissenschaft",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MMW-PR",
+          "name": "Praxisorientierte Medienwissenschaft",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        },
+        {
+          "id": "MMW-VT",
+          "name": "Vertiefende Medienwissenschaft",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 5
+        }
+      ]
+    },
+
+    {
+      "bereich": "Wahlpflicht",
+      "module": [
+        {
+          "id": "MMI-WP-INF",
+          "name": "Wahlpflichtfach Informatik",
+          "ects": 12,
+          "typ": "Wahlpflicht"
+        },
+        {
+          "id": "MMI-WP-MI",
+          "name": "Wahlpflichtfach Medieninformatik",
+          "ects": 6,
+          "typ": "Wahlpflicht"
+        }
+      ]
+    },
+
+    {
+      "bereich": "Überfachliche berufsfeldorientierte Kompetenzen (übK)",
+      "gesamt_ects_bereich": 9,
+      "module": [
+        {
+          "id": "MMI-PRO",
+          "name": "Proseminar (übK)",
+          "ects": 3,
+          "typ": "Pflicht (Teil übK)"
+        },
+        {
+          "id": "MMI-UEK",
+          "name": "Freie übK-Veranstaltungen",
+          "ects": 6,
+          "typ": "Wahlpflicht (Teil übK)"
+        }
+      ]
+    },
+
+    {
+      "bereich": "Abschluss",
+      "module": [
+        {
+          "id": "MMI-BA",
+          "name": "Bachelorarbeit inkl. Vortrag",
+          "ects": 12,
+          "typ": "Pflicht",
+          "semester_empfohlen": 6
+        }
+      ]
+    }
+  ]
+}
