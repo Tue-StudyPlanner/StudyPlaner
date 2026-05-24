@@ -1,4 +1,4 @@
-export type MasterCat = 'TECH' | 'THEO' | 'PRAK' | 'INFO' | 'FOKUS' | 'BASIS'
+export type MasterCat = 'TECH' | 'THEO' | 'PRAK' | 'INFO' | 'BASIS'
 
 export type MasterCategoryMeta = Record<MasterCat, { fullLabel: string }>
 

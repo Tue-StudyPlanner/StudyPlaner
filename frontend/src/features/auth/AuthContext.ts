@@ -15,7 +15,6 @@ export interface LoginInput {
 
 export interface SaveProfileInput {
   studyProgramId: number | null
-  regulationVersionId: number | null
   currentSemesterLabel: string | null
 }
 

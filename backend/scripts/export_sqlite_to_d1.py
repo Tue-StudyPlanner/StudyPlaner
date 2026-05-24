@@ -4,6 +4,9 @@ import argparse
 import re
 import sqlite3
 from pathlib import Path
+from typing import TextIO
+
+from regulation_seed_data import SQLITE_RULE_GROUP_PROGRAM_CODES, ProgramSeed, load_program_seeds
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_SQLITE_PATH = ROOT_DIR / "data" / "alma.sqlite"
@@ -167,6 +170,255 @@ def quote_value(sqlite_conn: sqlite3.Connection, value: object) -> str:
     return str(quoted[0]) if quoted else "NULL"
 
 
+def _sql_string_list(values: set[str] | tuple[str, ...]) -> str:
+    return ", ".join(f"'{value}'" for value in sorted(values))
+
+
+def _write_study_program_upsert(
+    handle: TextIO,
+    sqlite_conn: sqlite3.Connection,
+    program_seed: ProgramSeed,
+) -> None:
+    values_sql = ", ".join(
+        [
+            quote_value(sqlite_conn, program_seed.study_program_id),
+            quote_value(sqlite_conn, program_seed.code),
+            quote_value(sqlite_conn, program_seed.name),
+            quote_value(sqlite_conn, program_seed.degree),
+            quote_value(sqlite_conn, program_seed.subject),
+            quote_value(sqlite_conn, program_seed.po_version),
+            quote_value(sqlite_conn, program_seed.total_ects),
+            quote_value(sqlite_conn, program_seed.language),
+            quote_value(sqlite_conn, program_seed.source_status),
+            quote_value(sqlite_conn, program_seed.notes),
+        ]
+    )
+    handle.write(
+        'INSERT INTO "study_programs" '
+        '("id", "code", "name", "degree", "subject", "po_version", '
+        '"total_ects", "language", "source_status", "notes") '
+        f'VALUES ({values_sql}) '\
+        'ON CONFLICT("code") DO UPDATE SET '\
+        '"name" = excluded."name", '\
+        '"degree" = excluded."degree", '\
+        '"subject" = excluded."subject", '\
+        '"po_version" = excluded."po_version", '\
+        '"total_ects" = excluded."total_ects", '\
+        '"language" = excluded."language", '\
+        '"source_status" = excluded."source_status", '\
+        '"notes" = excluded."notes";\n'
+    )
+
+
+def _write_examination_regulation_upsert(
+    handle: TextIO,
+    sqlite_conn: sqlite3.Connection,
+    program_seed: ProgramSeed,
+) -> None:
+    values_sql = ", ".join(
+        [
+            quote_value(sqlite_conn, program_seed.regulation_code),
+            quote_value(sqlite_conn, program_seed.regulation_name),
+            quote_value(sqlite_conn, program_seed.degree),
+            quote_value(sqlite_conn, program_seed.subject),
+            quote_value(sqlite_conn, program_seed.notes),
+        ]
+    )
+    handle.write(
+        'INSERT INTO "examination_regulations" '
+        '("code", "name", "degree", "subject", "notes") '
+        f'VALUES ({values_sql}) '\
+        'ON CONFLICT("code") DO UPDATE SET '\
+        '"name" = excluded."name", '\
+        '"degree" = excluded."degree", '\
+        '"subject" = excluded."subject", '\
+        '"notes" = excluded."notes";\n'
+    )
+
+
+def _write_regulation_version_upsert(
+    handle: TextIO,
+    sqlite_conn: sqlite3.Connection,
+    program_seed: ProgramSeed,
+) -> None:
+    handle.write(
+        'INSERT INTO "regulation_versions" '
+        '("regulation_id", "code", "version_label", "total_ects", "language", "source_status", "notes") '
+        'SELECT id, '
+        f'{quote_value(sqlite_conn, program_seed.code)}, '
+        f'{quote_value(sqlite_conn, program_seed.version_label)}, '
+        f'{quote_value(sqlite_conn, program_seed.total_ects)}, '
+        f'{quote_value(sqlite_conn, program_seed.language)}, '
+        f'{quote_value(sqlite_conn, program_seed.source_status)}, '
+        f'{quote_value(sqlite_conn, program_seed.notes)} '
+        'FROM "examination_regulations" '
+        f'WHERE "code" = {quote_value(sqlite_conn, program_seed.regulation_code)} '
+        'ON CONFLICT("code") DO UPDATE SET '
+        '"version_label" = excluded."version_label", '
+        '"total_ects" = excluded."total_ects", '
+        '"language" = excluded."language", '
+        '"source_status" = excluded."source_status", '
+        '"notes" = excluded."notes";\n'
+    )
+
+
+def _write_program_regulation_link_upsert(
+    handle: TextIO,
+    sqlite_conn: sqlite3.Connection,
+    program_seed: ProgramSeed,
+) -> None:
+    handle.write(
+        'INSERT INTO "study_program_regulation_versions" '
+        '("study_program_id", "regulation_version_id", "is_default", "enrollment_match") '
+        'SELECT sp.id, rv.id, 1, '\
+        f'{quote_value(sqlite_conn, "program_code")} '
+        'FROM "study_programs" AS sp '\
+        'JOIN "regulation_versions" AS rv ON rv."code" = '\
+        f'{quote_value(sqlite_conn, program_seed.code)} '
+        f'WHERE sp."code" = {quote_value(sqlite_conn, program_seed.code)} '
+        'ON CONFLICT("study_program_id", "regulation_version_id") DO UPDATE SET '
+        '"is_default" = excluded."is_default", '
+        '"enrollment_match" = excluded."enrollment_match";\n'
+    )
+
+
+def _write_json_rule_groups(
+    handle: TextIO,
+    sqlite_conn: sqlite3.Connection,
+    program_seed: ProgramSeed,
+) -> None:
+    if program_seed.uses_sqlite_rule_groups:
+        return
+
+    for rule_group in program_seed.rule_groups:
+        handle.write(
+            'INSERT INTO "regulation_rule_groups" '
+            '("regulation_version_id", "study_area_id", "code", "name", "group_type", "required_ects", "min_ects", "max_ects", "sort_order", "notes") '
+            'SELECT rv.id, NULL, '
+            f'{quote_value(sqlite_conn, rule_group.code)}, '
+            f'{quote_value(sqlite_conn, rule_group.name)}, '
+            f'{quote_value(sqlite_conn, "study_area")}, '
+            f'{quote_value(sqlite_conn, rule_group.required_ects)}, '
+            'NULL, NULL, '
+            f'{quote_value(sqlite_conn, rule_group.sort_order)}, '
+            f'{quote_value(sqlite_conn, rule_group.notes)} '
+            'FROM "regulation_versions" AS rv '
+            f'WHERE rv."code" = {quote_value(sqlite_conn, program_seed.code)} '
+            'ON CONFLICT("regulation_version_id", "code") DO UPDATE SET '
+            '"name" = excluded."name", '
+            '"group_type" = excluded."group_type", '
+            '"required_ects" = excluded."required_ects", '
+            '"sort_order" = excluded."sort_order", '
+            '"notes" = excluded."notes";\n'
+        )
+
+
+def _write_sqlite_rule_group_seed(handle: TextIO) -> None:
+    program_codes = _sql_string_list(SQLITE_RULE_GROUP_PROGRAM_CODES)
+    handle.write(
+        '-- Rebuild regulation rule groups and course mappings for the programs that already have curriculum matches.\n'
+        'INSERT OR IGNORE INTO regulation_rule_groups (\n'
+        '    regulation_version_id,\n'
+        '    study_area_id,\n'
+        '    code,\n'
+        '    name,\n'
+        '    group_type,\n'
+        '    required_ects,\n'
+        '    min_ects,\n'
+        '    max_ects,\n'
+        '    sort_order,\n'
+        '    notes\n'
+        ')\n'
+        'SELECT\n'
+        '    rv.id,\n'
+        '    sa.id,\n'
+        '    sa.code,\n'
+        '    sa.name,\n'
+        "    COALESCE(sa.area_type, 'study_area'),\n"
+        '    sa.required_ects,\n'
+        '    sa.min_ects,\n'
+        '    sa.max_ects,\n'
+        '    sa.sort_order,\n'
+        '    sa.source_note\n'
+        'FROM study_areas AS sa\n'
+        'JOIN study_programs AS sp ON sp.id = sa.program_id\n'
+        'JOIN regulation_versions AS rv ON rv.code = sp.code\n'
+        f'WHERE sp.code IN ({program_codes});\n\n'
+        'INSERT OR IGNORE INTO regulation_course_mappings (\n'
+        '    regulation_version_id,\n'
+        '    course_id,\n'
+        '    module_id,\n'
+        '    rule_group_id,\n'
+        '    status,\n'
+        '    ects_counted,\n'
+        '    match_type,\n'
+        '    source_note\n'
+        ')\n'
+        'SELECT DISTINCT\n'
+        '    rv.id,\n'
+        '    m.course_id,\n'
+        '    m.module_id,\n'
+        '    rrg.id,\n'
+        "    COALESCE(opt.status, 'allowed'),\n"
+        '    COALESCE(opt.ects_counted, cm.ects),\n'
+        '    m.match_type,\n'
+        '    COALESCE(opt.rule_text, m.notes)\n'
+        'FROM course_curriculum_matches AS m\n'
+        'JOIN curriculum_modules AS cm ON cm.id = m.module_id\n'
+        'JOIN module_study_area_options AS opt ON opt.module_id = cm.id\n'
+        'JOIN study_areas AS sa ON sa.id = opt.study_area_id\n'
+        'JOIN study_programs AS sp ON sp.id = sa.program_id\n'
+        'JOIN regulation_versions AS rv ON rv.code = sp.code\n'
+        'JOIN regulation_rule_groups AS rrg\n'
+        '    ON rrg.regulation_version_id = rv.id\n'
+        '   AND rrg.study_area_id = sa.id\n'
+        f'WHERE sp.code IN ({program_codes});\n\n'
+        '-- BSC_INFO_2021 study_areas were seeded with NULL required_ects.\n'
+        '-- Set correct values derived from the official Prüfungsordnung 2021.\n'
+        'UPDATE regulation_rule_groups\n'
+        'SET required_ects = CASE code\n'
+        "    WHEN 'MATH'  THEN 33\n"
+        "    WHEN 'INF'   THEN 78\n"
+        "    WHEN 'PRAK'  THEN 6\n"
+        "    WHEN 'TECH'  THEN 6\n"
+        "    WHEN 'THEO'  THEN 6\n"
+        "    WHEN 'INFO'  THEN 15\n"
+        "    WHEN 'UEBK'  THEN 18\n"
+        '    ELSE required_ects\n'
+        'END\n'
+        "WHERE regulation_version_id = (\n"
+        "    SELECT id FROM regulation_versions WHERE code = 'BSC_INFO_2021'\n"
+        ');\n\n'
+    )
+
+
+def _write_official_regulation_seed(handle: TextIO, sqlite_conn: sqlite3.Connection) -> None:
+    program_seeds = load_program_seeds()
+
+    handle.write('-- Seed official PO 2021 study-program and regulation data from einzupflegene_po/.\n')
+    for program_seed in program_seeds:
+        _write_study_program_upsert(handle, sqlite_conn, program_seed)
+    handle.write('\n')
+
+    for program_seed in program_seeds:
+        _write_examination_regulation_upsert(handle, sqlite_conn, program_seed)
+    handle.write('\n')
+
+    for program_seed in program_seeds:
+        _write_regulation_version_upsert(handle, sqlite_conn, program_seed)
+    handle.write('\n')
+
+    for program_seed in program_seeds:
+        _write_program_regulation_link_upsert(handle, sqlite_conn, program_seed)
+    handle.write('\n')
+
+    _write_sqlite_rule_group_seed(handle)
+
+    for program_seed in program_seeds:
+        _write_json_rule_groups(handle, sqlite_conn, program_seed)
+    handle.write('\n')
+
+
 def export_data(source_path: Path, output_path: Path) -> None:
     """Write a data-only SQL dump that can be executed against D1.
 
@@ -202,6 +454,7 @@ def export_data(source_path: Path, output_path: Path) -> None:
                     )
                 handle.write("\n")
 
+            _write_official_regulation_seed(handle, sqlite_conn)
             handle.write("PRAGMA foreign_keys = ON;\n")
     finally:
         sqlite_conn.close()

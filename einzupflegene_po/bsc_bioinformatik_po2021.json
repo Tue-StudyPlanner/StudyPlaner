@@ -1,0 +1,206 @@
+{
+  "studiengang": "Bachelor of Science Bioinformatik",
+  "abschluss": "B.Sc.",
+  "universitaet": "Eberhard Karls Universität Tübingen",
+  "pruefungsordnung": "PO2021",
+  "po_datum": "22.07.2022",
+  "regelstudienzeit_semester": 6,
+  "gesamt_ects": 180,
+  "quelle": "https://uni-tuebingen.de/de/74482",
+
+  "module": [
+
+    {
+      "bereich": "Mathematik (Pflicht)",
+      "module": [
+        {
+          "id": "MINF1110",
+          "name": "Mathematik für Informatik 1: Analysis",
+          "ects": 9,
+          "typ": "Pflicht",
+          "semester_empfohlen": 1
+        },
+        {
+          "id": "MINF1120",
+          "name": "Mathematik für Informatik 2: Lineare Algebra",
+          "ects": 9,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MINF1130",
+          "name": "Mathematik für Informatik 3: Fortgeschrittene Themen",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        },
+        {
+          "id": "MINF1150",
+          "name": "Stochastik",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        }
+      ]
+    },
+
+    {
+      "bereich": "Informatik (Pflicht)",
+      "module": [
+        {
+          "id": "MINF2110",
+          "name": "Praktische Informatik 1: Deklarative Programmierung",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 1
+        },
+        {
+          "id": "MINF2120",
+          "name": "Praktische Informatik 2: Imperative und objektorientierte Programmierung",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MINF2130",
+          "name": "Praktische Informatik 3: Software Engineering",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 4
+        },
+        {
+          "id": "MINF2140",
+          "name": "Praktische Informatik 4: Teamprojekt",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 5
+        },
+        {
+          "id": "MINF4110",
+          "name": "Theoretische Informatik 1: Algorithmen und Datenstrukturen",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MINF4120",
+          "name": "Theoretische Informatik 2: Formale Sprachen, Berechenbarkeit und Komplexität",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        }
+      ]
+    },
+
+    {
+      "bereich": "Bioinformatik (Pflicht)",
+      "module": [
+        {
+          "id": "MBIO-EBF",
+          "name": "Einführung in die Bioinformatik",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 1
+        },
+        {
+          "id": "MBIO-GBF",
+          "name": "Grundlagen der Bioinformatik",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MBIO-PRO",
+          "name": "Proseminar (übK)",
+          "ects": 3,
+          "typ": "Pflicht (Teil übK)",
+          "semester_empfohlen": 3
+        }
+      ]
+    },
+
+    {
+      "bereich": "Lebenswissenschaften (Pflicht)",
+      "module": [
+        {
+          "id": "MBIO-ZMG",
+          "name": "Zellbiologie / Mikrobiologie / Genetik",
+          "ects": 9,
+          "typ": "Pflicht",
+          "semester_empfohlen": 1
+        },
+        {
+          "id": "MBIO-CH1",
+          "name": "Chemie I",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 2
+        },
+        {
+          "id": "MBIO-CH2",
+          "name": "Chemie II: Physikalische Chemie",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 3
+        },
+        {
+          "id": "MBIO-NB",
+          "name": "Neurobiologie",
+          "ects": 6,
+          "typ": "Pflicht",
+          "semester_empfohlen": 4
+        }
+      ]
+    },
+
+    {
+      "bereich": "Wahlpflicht",
+      "module": [
+        {
+          "id": "MBIO-WP-INF",
+          "name": "Wahlpflichtfach Informatik",
+          "ects": 12,
+          "typ": "Wahlpflicht"
+        },
+        {
+          "id": "MBIO-WP-LW",
+          "name": "Wahlpflichtfach Lebenswissenschaften",
+          "ects": 9,
+          "typ": "Wahlpflicht"
+        },
+        {
+          "id": "MBIO-WP-BF",
+          "name": "Wahlpflichtfach Bioinformatik",
+          "ects": 9,
+          "typ": "Wahlpflicht"
+        }
+      ]
+    },
+
+    {
+      "bereich": "Überfachliche berufsfeldorientierte Kompetenzen (übK)",
+      "gesamt_ects_bereich": 6,
+      "module": [
+        {
+          "id": "MBIO-UEK",
+          "name": "Freie übK-Veranstaltungen",
+          "ects": 6,
+          "typ": "Wahlpflicht (Teil übK)"
+        }
+      ]
+    },
+
+    {
+      "bereich": "Abschluss",
+      "module": [
+        {
+          "id": "MBIO-BA",
+          "name": "Bachelorarbeit inkl. Vortrag",
+          "ects": 12,
+          "typ": "Pflicht",
+          "semester_empfohlen": 6
+        }
+      ]
+    }
+  ]
+}

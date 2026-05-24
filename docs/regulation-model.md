@@ -99,12 +99,16 @@ Fields:
 
 ## Initial strategy
 
-- seed the first supported regulation versions from the already tracked study programs:
+- use the official PO 2021 JSON files in `einzupflegene_po/` as the source of truth for the supported study programs and default regulation versions
+- seed these six study programs / regulation versions:
+  - `BSC_BIOINFO_2021`
   - `BSC_INFO_2021`
+  - `BSC_MEDIENINFO_2021`
+  - `BSC_MEDIZININFO_2021`
   - `MSC_INFO_2021`
   - `MSC_ML_2021`
-- mirror each seeded `study_areas` row into one `regulation_rule_groups` row
-- derive `regulation_course_mappings` from the existing curriculum-match tables
+- keep the richer SQLite-derived `study_areas` / `course_curriculum_matches` bridge for the three already mapped programs (`BSC_INFO_2021`, `MSC_INFO_2021`, `MSC_ML_2021`)
+- seed JSON-only rule groups for the three additional bachelor programs until catalog mappings exist there as well
 
 ## Study-program to regulation matching rule
 
@@ -113,6 +117,7 @@ For the current backend model, the matching rule is intentionally simple:
 1. each `study_programs` row is linked to one default `regulation_versions` row through `study_program_regulation_versions`
 2. the `enrollment_match` field records how that link should be interpreted later for a user profile
 3. the current seed uses `program_code`, which means a student profile can be matched by the selected study-program code alone
-4. if the product later needs multiple active regulation versions for one program, the same bridge table can hold multiple rows and still keep one `is_default = 1` mapping
+4. because only PO 2021 is active right now, the frontend only needs one study-program selection that already includes the PO; the backend resolves the default regulation version internally
+5. if the product later needs multiple active regulation versions for one program, the same bridge table can hold multiple rows and still keep one `is_default = 1` mapping
 
-This rule is now exposed through the study-program API so the frontend can load the default regulation together with the program.
+This rule is now exposed through the study-program API so the frontend can load the study program, show the embedded PO label, and let the backend resolve the default regulation automatically.

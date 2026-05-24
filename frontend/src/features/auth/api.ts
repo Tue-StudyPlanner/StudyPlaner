@@ -1,11 +1,5 @@
 import { createAuthHeaders, fetchJson } from '../../shared/utils/api'
-import type {
-  AuthPayload,
-  AuthSessionResponse,
-  AuthUser,
-  RegulationVersionOption,
-  StudyProgramOption,
-} from './types'
+import type { AuthPayload, AuthSessionResponse, AuthUser, StudyProgramOption } from './types'
 
 interface RegisterInput {
   identifier: string
@@ -23,17 +17,12 @@ interface StudyProgramsResponse {
   studyPrograms: StudyProgramOption[]
 }
 
-interface RegulationVersionsResponse {
-  regulationVersions: RegulationVersionOption[]
-}
-
 interface UserResponse {
   user: AuthUser
 }
 
 interface SaveProfileInput {
   studyProgramId: number | null
-  regulationVersionId: number | null
   currentSemesterLabel: string | null
 }
 
@@ -94,7 +83,3 @@ export async function fetchStudyPrograms(): Promise<StudyProgramOption[]> {
   return response.studyPrograms
 }
 
-export async function fetchRegulationVersions(): Promise<RegulationVersionOption[]> {
-  const response = await fetchJson<RegulationVersionsResponse>('/api/regulation-versions')
-  return response.regulationVersions
-}

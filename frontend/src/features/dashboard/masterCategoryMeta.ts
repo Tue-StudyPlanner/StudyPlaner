@@ -5,6 +5,5 @@ export const MASTER_CATEGORY_META: MasterCategoryMeta = {
   THEO: { fullLabel: 'Theoretical Computer Science' },
   PRAK: { fullLabel: 'Practical Computer Science' },
   INFO: { fullLabel: 'Computer Science' },
-  FOKUS: { fullLabel: 'Focus and Extensions' },
   BASIS: { fullLabel: 'Foundations' },
 }

@@ -4,7 +4,7 @@ import type { TranscriptCoursePreview } from '../types'
 import { CategoryToggle } from './CategoryToggle'
 import { CatalogCoursePicker } from './CatalogCoursePicker'
 
-const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'FOKUS', 'BASIS']
+const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'BASIS']
 
 interface ManualCompletedCourseFormProps {
   defaultSemester: string | null | undefined

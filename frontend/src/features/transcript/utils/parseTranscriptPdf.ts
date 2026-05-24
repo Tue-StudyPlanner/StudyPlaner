@@ -150,7 +150,7 @@ function toDefaultMasterCat(section: string | null): MasterCat {
     return 'BASIS'
   }
   // Professional skills and compulsory/mandatory areas → BASIS.
-  // BASIS is broader than FOKUS; when the correct area is ambiguous, prefer BASIS.
+  // When the correct area is ambiguous, prefer BASIS.
   if (normalizedSection.includes('professional skills') || normalizedSection.includes('compulsory')) {
     return 'BASIS'
   }

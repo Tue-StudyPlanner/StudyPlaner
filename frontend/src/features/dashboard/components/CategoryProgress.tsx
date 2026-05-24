@@ -6,7 +6,6 @@ const CAT_COLOR_CLASS: Record<MasterCat, string> = {
   THEO: 'bg-cat-theo',
   PRAK: 'bg-cat-prak',
   INFO: 'bg-cat-info',
-  FOKUS: 'bg-cat-fokus',
   BASIS: 'bg-cat-basis',
 }
 

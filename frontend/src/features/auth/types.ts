@@ -41,22 +41,6 @@ export interface StudyProgramOption {
   regulationVersionCount: number
 }
 
-export interface RegulationVersionOption {
-  id: number
-  code: string
-  versionLabel: string
-  totalEcts: number | null
-  language: string | null
-  sourceStatus: string
-  notes: string | null
-  regulationCode: string
-  regulationName: string
-  degree: string | null
-  subject: string | null
-  ruleGroupCount: number
-  mappedCourseCount: number
-}
-
 export interface AuthSessionResponse {
   authenticated: boolean
   user: AuthUser | null

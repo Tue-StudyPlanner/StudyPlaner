@@ -1,5 +1,5 @@
 import type { FormEvent } from 'react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError } from '../../../shared/utils/api'
 import { fetchStudyPrograms } from '../api'
@@ -67,19 +67,8 @@ export function AccountPage() {
   const [error, setError] = useState<string | null>(null)
   const [studyPrograms, setStudyPrograms] = useState<StudyProgramOption[]>([])
   const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(false)
-  const [selectedStudyProgramId, setSelectedStudyProgramId] = useState<number | null>(null)
-  const [currentSemesterLabel, setCurrentSemesterLabel] = useState<string>('')
-
-  useEffect(() => {
-    if (!user) {
-      setSelectedStudyProgramId(null)
-      setCurrentSemesterLabel('')
-      return
-    }
-
-    setSelectedStudyProgramId(user.profile.studyProgramId)
-    setCurrentSemesterLabel(user.profile.currentSemesterLabel ?? '')
-  }, [user])
+  const [draftStudyProgramId, setDraftStudyProgramId] = useState<number | null | undefined>(undefined)
+  const [draftCurrentSemesterLabel, setDraftCurrentSemesterLabel] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     let isActive = true
@@ -111,10 +100,9 @@ export function AccountPage() {
     }
   }, [])
 
-  const selectedStudyProgram = useMemo(
-    () => studyPrograms.find((program) => program.id === selectedStudyProgramId) ?? null,
-    [selectedStudyProgramId, studyPrograms],
-  )
+  const selectedStudyProgramId =
+    draftStudyProgramId !== undefined ? draftStudyProgramId : (user?.profile.studyProgramId ?? null)
+  const currentSemesterLabel = draftCurrentSemesterLabel ?? (user?.profile.currentSemesterLabel ?? '')
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
@@ -130,10 +118,14 @@ export function AccountPage() {
           studyProgramId: selectedStudyProgramId,
           currentSemesterLabel: currentSemesterLabel.trim() || null,
         })
+        setDraftStudyProgramId(undefined)
+        setDraftCurrentSemesterLabel(undefined)
         navigate(ROUTES.dashboard)
         return
       } else {
         await login({ identifier, password })
+        setDraftStudyProgramId(undefined)
+        setDraftCurrentSemesterLabel(undefined)
         navigate(ROUTES.dashboard)
         return
       }
@@ -150,7 +142,9 @@ export function AccountPage() {
     setMessage(null)
     try {
       await logout()
-      setMessage('Signed out successfully.')
+      setDraftStudyProgramId(undefined)
+      setDraftCurrentSemesterLabel(undefined)
+      navigate(ROUTES.dashboard)
     } catch (logoutError) {
       setError(normalizeErrorMessage(logoutError))
     } finally {
@@ -167,9 +161,10 @@ export function AccountPage() {
     try {
       await saveProfile({
         studyProgramId: selectedStudyProgramId,
-        regulationVersionId: null,
         currentSemesterLabel: currentSemesterLabel.trim() || null,
       })
+      setDraftStudyProgramId(undefined)
+      setDraftCurrentSemesterLabel(undefined)
       setMessage('Your study profile has been updated.')
     } catch (profileError) {
       setError(normalizeErrorMessage(profileError))
@@ -237,7 +232,7 @@ export function AccountPage() {
                 <select
                   value={toSelectValue(selectedStudyProgramId)}
                   onChange={(event) =>
-                    setSelectedStudyProgramId(
+                    setDraftStudyProgramId(
                       event.target.value ? Number(event.target.value) : null,
                     )
                   }
@@ -259,7 +254,7 @@ export function AccountPage() {
                 </span>
                 <select
                   value={currentSemesterLabel}
-                  onChange={(event) => setCurrentSemesterLabel(event.target.value)}
+                  onChange={(event) => setDraftCurrentSemesterLabel(event.target.value)}
                   className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
                 >
                   <option value="">Not specified</option>
@@ -271,11 +266,9 @@ export function AccountPage() {
 
               <div className="lg:col-span-2 flex flex-wrap items-center justify-between gap-3 pt-2">
                 <div className="grid gap-0.5">
-                  {selectedStudyProgram?.defaultRegulationName && selectedStudyProgram?.defaultRegulationVersionLabel ? (
-                    <p className="text-[12.5px] text-fg-muted">
-                      Regulation: {selectedStudyProgram.defaultRegulationName} {selectedStudyProgram.defaultRegulationVersionLabel}
-                    </p>
-                  ) : null}
+                  <p className="text-[12.5px] text-fg-muted">
+                    Choose your study program incl. PO and keep your start semester up to date.
+                  </p>
                   <p className="text-[12.5px] text-fg-muted">
                     Current semester (auto-detected): <span className="font-medium text-fg">{getCurrentSemester()}</span>
                   </p>
@@ -357,14 +350,14 @@ export function AccountPage() {
                     <select
                       value={toSelectValue(selectedStudyProgramId)}
                       onChange={(event) =>
-                        setSelectedStudyProgramId(
+                        setDraftStudyProgramId(
                           event.target.value ? Number(event.target.value) : null,
                         )
                       }
                       disabled={isLoadingOptions}
                       className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
                     >
-                      <option value="">Select a study program</option>
+                      <option value="">Select a study program incl. PO</option>
                       {studyPrograms.map((studyProgram) => (
                         <option key={studyProgram.id} value={studyProgram.id}>
                           {studyProgram.name}
@@ -379,7 +372,7 @@ export function AccountPage() {
                     </span>
                     <select
                       value={currentSemesterLabel}
-                      onChange={(event) => setCurrentSemesterLabel(event.target.value)}
+                      onChange={(event) => setDraftCurrentSemesterLabel(event.target.value)}
                       className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13.5px] text-fg outline-none transition-colors focus:border-primary"
                     >
                       <option value="">Select your start semester</option>
@@ -405,7 +398,7 @@ export function AccountPage() {
             <h2 className="mb-3 text-[14px] font-semibold text-fg">What you get with an account</h2>
             <ul className="grid gap-2 pl-5 text-[13.5px] leading-6 text-fg-mid">
               <li className="list-disc">Persist favorite courses across devices</li>
-              <li className="list-disc">Store your selected study program and regulation</li>
+              <li className="list-disc">Store your study program incl. PO and your start semester</li>
               <li className="list-disc">Save completed courses and personal progress</li>
             </ul>
           </section>
@@ -432,14 +425,11 @@ export function AccountPage() {
                     <div className="text-[13px] font-semibold text-fg">{studyProgram.name}</div>
                     <div className="text-[12.5px] text-fg-mid">
                       {studyProgram.degree || 'Degree n/a'}
-                      {studyProgram.poVersion ? ` · PO ${studyProgram.poVersion}` : ''}
+                      {studyProgram.totalEcts ? ` · ${studyProgram.totalEcts} ECTS` : ''}
                     </div>
-                    <div className="text-[12px] text-fg-muted">
-                      Default regulation:{' '}
-                      {studyProgram.defaultRegulationName && studyProgram.defaultRegulationVersionLabel
-                        ? `${studyProgram.defaultRegulationName} ${studyProgram.defaultRegulationVersionLabel}`
-                        : 'not mapped yet'}
-                    </div>
+                    {studyProgram.subject ? (
+                      <div className="text-[12px] text-fg-muted">{studyProgram.subject}</div>
+                    ) : null}
                   </div>
                 ))}
               </div>

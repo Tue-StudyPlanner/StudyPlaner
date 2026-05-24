@@ -15,7 +15,7 @@ CATALOG_FILTER_SQL = """
     )
 """
 
-MASTER_CAT_ORDER = ["TECH", "THEO", "PRAK", "INFO", "FOKUS", "BASIS"]
+MASTER_CAT_ORDER = ["TECH", "THEO", "PRAK", "INFO", "BASIS"]
 PREREQUISITE_KEYWORDS = ("voraus", "prerequisite", "requirement")
 DESCRIPTION_SECTION_KEYWORDS = (
     "beschreibung",
@@ -108,7 +108,7 @@ def _study_area_to_master_cat(study_area_code: str | None) -> str | None:
     if normalized_code in {"INFO", "INFO-INFO", "ML-CS"} or normalized_code.endswith("-INFO"):
         return "INFO"
     if normalized_code in {"INFO-FOKUS", "ML-DIVERSE", "ML-EXP", "PROSEM", "UEBK"}:
-        return "FOKUS"
+        return "BASIS"
     if normalized_code in {"MATH", "INF", "INFO-BASIS", "ML-FOUND"} or normalized_code.endswith(
         "BASIS"
     ):

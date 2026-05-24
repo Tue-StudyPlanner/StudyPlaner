@@ -6,7 +6,7 @@ import { CatalogCoursePicker } from './CatalogCoursePicker'
 import { CategoryToggle } from './CategoryToggle'
 import { EditIcon, TrashIcon } from './icons'
 
-const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'FOKUS', 'BASIS']
+const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'BASIS']
 
 function formatOptionalNumber(value: number | null): string {
   return value === null ? '' : String(value)

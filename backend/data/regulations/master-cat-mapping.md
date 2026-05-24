@@ -1,23 +1,20 @@
 # masterCat Mapping
 
-All regulation areas collapse to six universal categories stored in `user_completed_courses.master_cat`.
+All regulation areas collapse to five universal categories stored in `user_completed_courses.master_cat`.
 
 ## Category values
 
-| Code    | Meaning                                                                 |
-|---------|-------------------------------------------------------------------------|
-| TECH    | Technical Computer Science (TI area, robotics)                          |
-| THEO    | Theoretical Computer Science (ThI area, logics)                         |
-| PRAK    | Practical Computer Science (PI elective area, labs)                     |
-| INFO    | Applied Computer Science (elective CS area, general)                    |
-| FOKUS   | Focus / specialization area (MSc Fokusbereich, MSc ML Diverse/Expanded) |
-| BASIS   | Foundations (Math, mandatory INF, ML Foundations, professional skills)  |
+| Code    | Meaning                                                                |
+|---------|------------------------------------------------------------------------|
+| TECH    | Technical Computer Science (TI area, robotics)                         |
+| THEO    | Theoretical Computer Science (ThI area, logics)                        |
+| PRAK    | Practical Computer Science (PI elective area, labs)                    |
+| INFO    | Applied Computer Science (elective CS area, general)                   |
+| BASIS   | Foundations and broad elective / specialization buckets when needed    |
 
-## BASIS vs FOKUS
+## BASIS as the single fallback bucket
 
-BASIS and FOKUS serve similar roles (foundational and elective credit pools). In practice,
-BASIS covers more courses and is the safer fallback. FOKUS is used for MSc specialization
-areas (INFO-FOKUS, ML-DIVERSE, ML-EXP) and some MSc Informatik areas.
+The former `FOKUS` bucket is now folded into `BASIS`.
 
 **Rule: when the correct category is ambiguous, assign BASIS.**
 
@@ -33,7 +30,7 @@ This applies to:
 | `*THEO`                                   | THEO      |
 | `*PRAK`                                   | PRAK      |
 | `INFO`, `INFO-INFO`, `ML-CS`, `*-INFO`    | INFO      |
-| `INFO-FOKUS`, `ML-DIVERSE`, `ML-EXP`, `PROSEM`, `UEBK` | FOKUS |
+| `INFO-FOKUS`, `ML-DIVERSE`, `ML-EXP`, `PROSEM`, `UEBK` | BASIS |
 | `MATH`, `INF`, `INFO-BASIS`, `ML-FOUND`, `*BASIS` | BASIS |
 
 ## ToR section heading fallbacks (from `parseTranscriptPdf.ts`)

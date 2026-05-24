@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
 import { AuthContext } from '../AuthContext'
 import type { LoginInput, RegisterInput, SaveProfileInput } from '../AuthContext'
@@ -87,21 +87,21 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     }
   }, [token])
 
-  async function register(input: RegisterInput): Promise<void> {
+  const register = useCallback(async (input: RegisterInput): Promise<void> => {
     const authPayload = await registerAccount(input)
     persistToken(authPayload.token)
     setToken(authPayload.token)
     setUser(authPayload.user)
-  }
+  }, [])
 
-  async function login(input: LoginInput): Promise<void> {
+  const login = useCallback(async (input: LoginInput): Promise<void> => {
     const authPayload = await loginAccount(input)
     persistToken(authPayload.token)
     setToken(authPayload.token)
     setUser(authPayload.user)
-  }
+  }, [])
 
-  async function logout(): Promise<void> {
+  const logout = useCallback(async (): Promise<void> => {
     if (token) {
       try {
         await logoutAccount(token)
@@ -113,15 +113,15 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     persistToken(null)
     setToken(null)
     setUser(null)
-  }
+  }, [token])
 
-  async function saveProfile(input: SaveProfileInput): Promise<void> {
+  const saveProfile = useCallback(async (input: SaveProfileInput): Promise<void> => {
     if (!token) {
       throw new Error('You must be signed in to update your profile.')
     }
     const updatedUser = await saveCurrentProfile(token, input)
     setUser(updatedUser)
-  }
+  }, [token])
 
   const contextValue = useMemo(
     () => ({
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       logout,
       saveProfile,
     }),
-    [isLoadingSession, token, user],
+    [isLoadingSession, login, logout, register, saveProfile, token, user],
   )
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>

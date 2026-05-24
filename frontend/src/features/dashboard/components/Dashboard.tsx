@@ -7,11 +7,12 @@ import type { CategoryProgress as CategoryProgressItem, ProgressSnapshot, Thesis
 import { useProgressSnapshot } from '../hooks/useProgressSnapshot'
 import { CategoryProgress } from './CategoryProgress'
 import { CompletedCourses } from './CompletedCourses'
+import { RegulationProgress } from './RegulationProgress'
 import { SpecializationCircle } from './SpecializationCircle'
 import { getCurrentSemesterLabel } from '../../planner/utils/semesterLabels'
 
 const CORE_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO']
-const ELECTIVE_CATEGORIES: MasterCat[] = ['FOKUS', 'BASIS']
+const ELECTIVE_CATEGORIES: MasterCat[] = ['BASIS']
 const REQUIRED_ECTS_PER_CATEGORY = 18
 const REQUIRED_ECTS_THESIS = 30
 
@@ -109,7 +110,11 @@ function AuthenticatedDashboard() {
       </div>
 
       <div className="mt-4.5 grid grid-cols-2 gap-4.5">
-        <CategoryProgress core={core} electives={electives} thesis={thesis} />
+        {progressSnapshot.regulationProgress.length > 0 ? (
+          <RegulationProgress areas={progressSnapshot.regulationProgress} />
+        ) : (
+          <CategoryProgress core={core} electives={electives} thesis={thesis} />
+        )}
         <SpecializationCircle
           categories={progressSnapshot.visualizationCategories}
           profileName={progressSnapshot.profileName}

@@ -7,6 +7,14 @@ export interface CategoryProgress {
   requiredEcts: number
 }
 
+export interface RegulationAreaProgress {
+  code: string
+  name: string
+  requiredEcts: number
+  earnedEcts: number
+  masterCat: MasterCat | null
+}
+
 export interface ThesisProgress {
   label: string
   earnedEcts: number
@@ -37,6 +45,7 @@ export interface ProgressSnapshot {
     cat: MasterCat
     earnedEcts: number
   }>
+  regulationProgress: RegulationAreaProgress[]
   visualizationCategories: VisualizationCategoryProgress[]
   profileName: string
   unmappedCompletedCourses: Array<{

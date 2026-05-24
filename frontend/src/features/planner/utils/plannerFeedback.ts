@@ -33,7 +33,6 @@ const MASTER_CATEGORY_LABELS: Record<MasterCat, string> = {
   THEO: 'Theoretical Computer Science',
   PRAK: 'Practical Computer Science',
   INFO: 'Computer Science',
-  FOKUS: 'Focus and Extensions',
   BASIS: 'Foundations',
 }
 
