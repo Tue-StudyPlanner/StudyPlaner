@@ -11,12 +11,15 @@ export function TopBar() {
 
   return (
     <header className="flex h-15 shrink-0 items-center bg-sidebar pl-8 pr-6">
-      <div className="mr-9 flex items-center gap-2.5">
+      <a
+        href="https://studyplaner.pages.dev/"
+        className="mr-9 flex items-center gap-2.5 rounded-md transition-opacity hover:opacity-90"
+      >
         <div className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-md bg-brand">
           <span className="font-serif text-[13px] font-bold text-white">S</span>
         </div>
         <span className="font-serif text-lg font-semibold text-white">StudyOS</span>
-      </div>
+      </a>
 
       <nav className="flex flex-1 gap-1">
         {NAV.map(({ path, label, Icon }) => (

@@ -8,6 +8,7 @@ import { useProgressSnapshot } from '../hooks/useProgressSnapshot'
 import { CategoryProgress } from './CategoryProgress'
 import { CompletedCourses } from './CompletedCourses'
 import { SpecializationCircle } from './SpecializationCircle'
+import { getCurrentSemesterLabel } from '../../planner/utils/semesterLabels'
 
 const CORE_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO']
 const ELECTIVE_CATEGORIES: MasterCat[] = ['FOKUS', 'BASIS']
@@ -43,6 +44,7 @@ function toCategoryProgress(snapshot: ProgressSnapshot): {
 }
 
 function AuthenticatedDashboard() {
+  const { user } = useAuth()
   const { progressSnapshot, isLoadingProgress, progressError } = useProgressSnapshot()
 
   if (isLoadingProgress || !progressSnapshot) {
@@ -62,6 +64,13 @@ function AuthenticatedDashboard() {
   }
 
   const { core, electives, thesis } = toCategoryProgress(progressSnapshot)
+  const subtitle = [
+    getCurrentSemesterLabel(),
+    user?.profile.studyProgramName ?? progressSnapshot.profileName,
+  ]
+    .filter((part) => Boolean(part && part.trim().length > 0))
+    .join(' · ')
+
   const stats = [
     {
       label: 'Total ECTS',
@@ -74,12 +83,11 @@ function AuthenticatedDashboard() {
       sub: 'of degree',
     },
     {
-      label: 'Ø Grade',
+      label: 'Average grade',
       value:
         progressSnapshot.summary.averageGrade !== null
           ? progressSnapshot.summary.averageGrade.toFixed(2)
           : '–',
-      sub: 'German scale',
     },
   ]
 
@@ -89,7 +97,7 @@ function AuthenticatedDashboard() {
         <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
           Study Overview
         </h1>
-        <p className="text-[13.5px] text-fg-muted">Summer Semester 2026 · Computer Science M.Sc.</p>
+        <p className="text-[13.5px] text-fg-muted">{subtitle}</p>
       </div>
 
       <div className="grid grid-cols-3 gap-6 rounded-[10px] border border-border bg-surface px-6 py-4.5">
