@@ -9,6 +9,7 @@ from request_utils import RequestBodyError, read_json_object
 from services.authentication import (
     AuthenticationError,
     AuthorizationError,
+    CredentialUpdateError,
     ProfileUpdateError,
     RegistrationError,
     get_authenticated_user,
@@ -17,6 +18,7 @@ from services.authentication import (
     logout_user,
     register_user,
     update_current_user_profile,
+    update_user_credentials,
 )
 from services.course_catalog import (
     get_catalog_course_detail,
@@ -190,6 +192,12 @@ async def route_request(request: Any, env: Any) -> Any:
                     await read_json_object(request),
                 )
                 return json_response({"user": profile}, request=request, env=env)
+            return _method_not_allowed_response(request, env)
+
+        if path == "/api/me/credentials":
+            if method == "PATCH":
+                updated = await update_user_credentials(env, request, await read_json_object(request))
+                return json_response({"user": updated}, request=request, env=env)
             return _method_not_allowed_response(request, env)
 
         if path == "/api/me/favorites":
@@ -481,6 +489,14 @@ async def route_request(request: Any, env: Any) -> Any:
     except ProfileUpdateError as exc:
         return error_response(
             code="profile_update_error",
+            message=str(exc),
+            request=request,
+            env=env,
+            status=400,
+        )
+    except CredentialUpdateError as exc:
+        return error_response(
+            code="credential_update_error",
             message=str(exc),
             request=request,
             env=env,

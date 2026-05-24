@@ -33,6 +33,10 @@ class ProfileUpdateError(ValueError):
     """Raised when a user profile update is invalid."""
 
 
+class CredentialUpdateError(ValueError):
+    """Raised when a credential (email/password) update is invalid."""
+
+
 def _safe_text(value: Any) -> str | None:
     if value is None:
         return None
@@ -668,3 +672,60 @@ async def update_current_user_profile(
     if updated_profile is None:
         raise ProfileUpdateError('The updated profile could not be loaded.')
     return updated_profile
+
+
+async def update_user_credentials(
+    env: Any,
+    request: Any,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    current_user = await require_authenticated_user(env, request)
+    user_id = int(current_user['id'])
+
+    current_password = payload.get('currentPassword')
+    if not current_password or not isinstance(current_password, str):
+        raise CredentialUpdateError('Current password is required to update credentials.')
+
+    user_row = await fetch_one(
+        env,
+        'SELECT password_hash AS passwordHash, password_salt AS passwordSalt FROM users WHERE id = ?',
+        [user_id],
+    )
+    if user_row is None:
+        raise CredentialUpdateError('User not found.')
+
+    expected_hash = _hash_password(current_password, str(user_row['passwordSalt']))
+    if not hmac.compare_digest(str(user_row['passwordHash']), expected_hash):
+        raise CredentialUpdateError('Current password is incorrect.')
+
+    updates: dict[str, Any] = {}
+
+    if 'identifier' in payload:
+        new_identifier = _validate_login_identifier(_safe_text(payload.get('identifier')))
+        existing = await _get_user_by_identifier(env, new_identifier)
+        if existing is not None and int(existing['id']) != user_id:
+            raise CredentialUpdateError('This email or username is already taken.')
+        updates['email'] = new_identifier
+        updates['display_name'] = _derive_display_name(new_identifier)
+
+    if 'newPassword' in payload:
+        new_password = _validate_password(payload.get('newPassword'))
+        pw_hash, pw_salt = _create_password_hash(new_password)
+        updates['password_hash'] = pw_hash
+        updates['password_salt'] = pw_salt
+
+    if not updates:
+        return await _get_user_profile(env, user_id) or {}
+
+    set_clauses = ', '.join(f'{k} = ?' for k in updates)
+    values = list(updates.values()) + [_now_unix(), user_id]
+    await execute(
+        env,
+        f'UPDATE users SET {set_clauses}, updated_at_unix = ? WHERE id = ?',  # noqa: S608
+        values,
+    )
+
+    updated = await _get_user_profile(env, user_id)
+    if updated is None:
+        raise CredentialUpdateError('The updated profile could not be loaded.')
+    return updated
