@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { JSX, ReactNode } from 'react'
 import { AuthContext } from '../AuthContext'
-import type { LoginInput, RegisterInput, SaveProfileInput } from '../AuthContext'
+import type { LoginInput, RegisterInput, SaveProfileInput, UpdateCredentialsInput } from '../AuthContext'
 import {
   fetchCurrentSession,
   loginAccount,
   logoutAccount,
   registerAccount,
   saveCurrentProfile,
+  updateCredentials as updateCredentialsApi,
 } from '../api'
 import type { AuthUser } from '../types'
 
@@ -123,6 +124,14 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
     setUser(updatedUser)
   }, [token])
 
+  const updateCredentials = useCallback(async (input: UpdateCredentialsInput): Promise<void> => {
+    if (!token) {
+      throw new Error('You must be signed in to update your credentials.')
+    }
+    const updatedUser = await updateCredentialsApi(token, input)
+    setUser(updatedUser)
+  }, [token])
+
   const contextValue = useMemo(
     () => ({
       user,
@@ -133,8 +142,9 @@ export function AuthProvider({ children }: AuthProviderProps): JSX.Element {
       login,
       logout,
       saveProfile,
+      updateCredentials,
     }),
-    [isLoadingSession, login, logout, register, saveProfile, token, user],
+    [isLoadingSession, login, logout, register, saveProfile, updateCredentials, token, user],
   )
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>

@@ -117,7 +117,6 @@ function AuthenticatedDashboard() {
         )}
         <SpecializationCircle
           categories={progressSnapshot.visualizationCategories}
-          profileName={progressSnapshot.profileName}
         />
       </div>
 

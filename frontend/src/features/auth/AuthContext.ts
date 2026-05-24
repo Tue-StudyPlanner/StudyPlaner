@@ -18,6 +18,12 @@ export interface SaveProfileInput {
   currentSemesterLabel: string | null
 }
 
+export interface UpdateCredentialsInput {
+  currentPassword: string
+  identifier?: string
+  newPassword?: string
+}
+
 export interface AuthContextValue {
   user: AuthUser | null
   token: string | null
@@ -27,6 +33,7 @@ export interface AuthContextValue {
   login: (input: LoginInput) => Promise<void>
   logout: () => Promise<void>
   saveProfile: (input: SaveProfileInput) => Promise<void>
+  updateCredentials: (input: UpdateCredentialsInput) => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined)

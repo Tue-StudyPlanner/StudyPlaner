@@ -26,6 +26,12 @@ interface SaveProfileInput {
   currentSemesterLabel: string | null
 }
 
+interface UpdateCredentialsInput {
+  currentPassword: string
+  identifier?: string
+  newPassword?: string
+}
+
 function isSupportedStudyProgram(studyProgram: StudyProgramOption): boolean {
   return studyProgram.sourceStatus === 'official'
     && studyProgram.poVersion === '2021'
@@ -74,6 +80,21 @@ export async function saveCurrentProfile(
   input: SaveProfileInput,
 ): Promise<AuthUser> {
   const response = await fetchJson<UserResponse>('/api/me/profile', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...createAuthHeaders(token),
+    },
+    body: JSON.stringify(input),
+  })
+  return response.user
+}
+
+export async function updateCredentials(
+  token: string,
+  input: UpdateCredentialsInput,
+): Promise<AuthUser> {
+  const response = await fetchJson<UserResponse>('/api/me/credentials', {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
