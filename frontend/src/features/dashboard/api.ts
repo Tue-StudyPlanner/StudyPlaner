@@ -33,7 +33,7 @@ function normalizeProgressSnapshot(snapshot: ProgressSnapshotResponse): Progress
     profileName:
       typeof snapshot.profileName === 'string' && snapshot.profileName.trim().length > 0
         ? snapshot.profileName
-        : 'No profile yet',
+        : '',
     unmappedCompletedCourses: Array.isArray(snapshot.unmappedCompletedCourses)
       ? snapshot.unmappedCompletedCourses
       : [],

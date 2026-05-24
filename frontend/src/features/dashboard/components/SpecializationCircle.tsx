@@ -2,6 +2,8 @@ import type { CSSProperties } from 'react'
 import type { VisualizationCategoryProgress } from '../types'
 import { VISUALIZATION_CATEGORY_COLORS } from '../visualizationCategories'
 
+const EXTENDED_RING_SCALE = 1.07
+
 interface Point {
   x: number
   y: number
@@ -9,7 +11,6 @@ interface Point {
 
 interface SpecializationCircleProps {
   categories: VisualizationCategoryProgress[]
-  profileName: string
 }
 
 function polygonPath(points: Point[]): string {
@@ -24,7 +25,7 @@ function pointOnCircle(index: number, total: number, radius: number, center: num
   }
 }
 
-export function SpecializationCircle({ categories, profileName }: SpecializationCircleProps) {
+export function SpecializationCircle({ categories }: SpecializationCircleProps) {
   if (categories.length === 0) {
     return (
       <div className="rounded-[10px] border border-border bg-surface px-6 py-5.5">
@@ -64,14 +65,14 @@ export function SpecializationCircle({ categories, profileName }: Specialization
 
       <div className="flex justify-center overflow-x-auto">
         <svg viewBox={`0 0 ${size} ${size}`} className="h-[420px] w-[420px] min-w-[420px]">
-          {[0.25, 0.5, 0.75, 1].map((scale) => (
+          {[0.25, 0.5, 0.75, EXTENDED_RING_SCALE].map((scale) => (
             <path
               key={scale}
               d={polygonPath(
                 categories.map((_, index) => pointOnCircle(index, categories.length, radius * scale, center)),
               )}
               fill="none"
-              stroke="rgba(148, 163, 184, 0.25)"
+              stroke={scale === EXTENDED_RING_SCALE ? 'rgba(148, 163, 184, 0.18)' : 'rgba(148, 163, 184, 0.25)'}
               strokeWidth="1"
             />
           ))}
@@ -97,6 +98,7 @@ export function SpecializationCircle({ categories, profileName }: Specialization
 
           {dataPoints.map((point, index) => {
             const category = categories[index]
+            if (category.progressRatio <= 0) return null
             return (
               <circle
                 key={`dot-${category.code}`}
@@ -110,7 +112,7 @@ export function SpecializationCircle({ categories, profileName }: Specialization
 
           {outerPoints.map((_, index) => {
             const category = categories[index]
-            const labelPoint = pointOnCircle(index, categories.length, radius * 1.16, center)
+            const labelPoint = pointOnCircle(index, categories.length, radius * 1.22, center)
             const isTopCategory = topCategory?.code === category.code && category.progressRatio > 0
             return (
               <text
@@ -131,28 +133,6 @@ export function SpecializationCircle({ categories, profileName }: Specialization
               </text>
             )
           })}
-
-          <circle cx={center} cy={center} r="44" fill="rgba(147, 13, 42, 0.08)" stroke="rgba(147, 13, 42, 0.2)" />
-          <text
-            x={center}
-            y={center - 8}
-            textAnchor="middle"
-            fill="currentColor"
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.08em' }}
-            className="text-fg-muted"
-          >
-            PROFILE
-          </text>
-          <text
-            x={center}
-            y={center + 12}
-            textAnchor="middle"
-            fill="currentColor"
-            style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 700 }}
-            className="text-fg"
-          >
-            {profileName}
-          </text>
         </svg>
       </div>
     </div>
