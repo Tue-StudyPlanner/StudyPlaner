@@ -13,11 +13,12 @@ The feature must stay optional and must not block public catalog browsing or oth
 ### In scope
 
 - authenticated upload flow for one transcript PDF at a time
+- browser-side parsing of one transcript PDF at a time
 - extraction of candidate transcript rows from the uploaded PDF
 - matching candidate rows against known catalog courses
 - explicit user review before any completed-course data is written
 - partial import when some rows match and others remain unresolved
-- clear status reporting for matched, uncertain, and unmatched rows
+- clear status reporting for matched, uncertain, unmatched, and invalid rows
 
 ### Out of scope
 
@@ -53,6 +54,7 @@ The feature must stay optional and must not block public catalog browsing or oth
 - upload and review endpoints must require authentication
 - transcript data must only be accessible to the owning account
 - parsing must run inside the controlled application boundary; no third-party transcript processor should receive student PDFs in v1 without explicit new approval
+- in v1 the PDF may be parsed in the browser to avoid server-side retention of the raw file when practical
 - validation must reject oversized files, unsupported MIME types, and malformed payloads at the API boundary
 
 ### Auditability
@@ -65,7 +67,7 @@ The feature must stay optional and must not block public catalog browsing or oth
 ### Upload and parsing
 
 - a signed-in user can select one PDF and start the import flow
-- the backend validates file type and size before parsing
+- the upload flow validates file type and size before parsing
 - the UI shows success, validation, and processing errors clearly
 
 ### Review and matching

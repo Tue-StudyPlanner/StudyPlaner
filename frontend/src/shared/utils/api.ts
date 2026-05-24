@@ -33,12 +33,18 @@ export function createAuthHeaders(token: string | null | undefined): HeadersInit
 export async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const apiBaseUrl = getApiBaseUrl()
   const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const requestUrl = `${apiBaseUrl}${normalizedPath}`
   let response: Response
-  
+
   try {
-    response = await fetch(`${apiBaseUrl}${normalizedPath}`, init)
+    response = await fetch(requestUrl, init)
   } catch (error) {
-    throw new ApiError(error instanceof Error ? error.message : 'Network error occurred. The server may be unreachable.', 0, 'network_error')
+    const fallbackMessage = `Network error while requesting ${requestUrl}. The API may be unreachable or blocked by CORS.`
+    throw new ApiError(
+      error instanceof Error && error.message ? `${fallbackMessage} ${error.message}` : fallbackMessage,
+      0,
+      'network_error',
+    )
   }
 
   if (!response.ok) {

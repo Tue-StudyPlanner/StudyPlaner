@@ -1,15 +1,18 @@
 import { createContext } from 'react'
 import type { CompletedCourse, MasterCat } from '../courses'
+import type { TranscriptSaveResult } from './types'
 
 export interface TranscriptContextValue {
   completedCourses: CompletedCourse[]
   isLoadingCompletedCourses: boolean
   isSavingCompletedCourses: boolean
   completedCoursesError: string | null
-  addCompletedCourse: (course: CompletedCourse) => void
-  removeCourse: (courseId: string) => void
-  setCategory: (courseId: string, masterCat: MasterCat) => void
-  updateCourse: (courseId: string, updates: Partial<CompletedCourse>) => void
+  addCompletedCourse: (course: CompletedCourse) => Promise<TranscriptSaveResult>
+  addCompletedCourses: (courses: CompletedCourse[]) => Promise<TranscriptSaveResult>
+  removeCourse: (courseId: string) => Promise<boolean>
+  setCategory: (courseId: string, masterCat: MasterCat) => Promise<boolean>
+  updateCourse: (courseId: string, updates: Partial<CompletedCourse>) => Promise<boolean>
+  clearCompletedCoursesError: () => void
 }
 
 export const TranscriptContext = createContext<TranscriptContextValue | undefined>(undefined)
