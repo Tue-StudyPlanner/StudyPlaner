@@ -217,11 +217,14 @@ function PlannerWeeklyListView({
   const blocks = useMemo(() => buildPlannerBlocks(plannedCourses), [plannedCourses])
 
   return (
-    <div className="grid gap-3">
+    <div className="grid min-w-0 gap-3">
       {DAY_ORDER.map((day) => {
         const dayBlocks = blocks.filter((block) => block.day === day)
         return (
-          <div key={day} className="rounded-[10px] border border-border-light bg-surface-hover/25 px-4 py-4">
+          <div
+            key={day}
+            className="min-w-0 overflow-hidden rounded-[10px] border border-border-light bg-surface-hover/25 px-3 py-4 sm:px-4"
+          >
             <div className="mb-3 text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
               {DAY_LABELS[day]}
             </div>
@@ -232,23 +235,23 @@ function PlannerWeeklyListView({
                 {dayBlocks.map((block) => (
                   <div
                     key={block.blockId}
-                    className={`rounded-[10px] border px-3 py-3 text-[12px] ${
+                    className={`min-w-0 overflow-hidden rounded-[10px] border px-3 py-3 text-[12px] ${
                       block.hasOverlap
                         ? 'border-primary/40 bg-primary/10 text-primary'
                         : 'border-border bg-surface text-fg'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate font-semibold">{block.courseTitle}</div>
-                        <div className="text-[11.5px] opacity-85">{block.label}</div>
-                        <div className="text-[11.5px] opacity-85">{block.room}</div>
+                    <div className="flex min-w-0 items-start justify-between gap-2.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="break-words font-semibold leading-5">{block.courseTitle}</div>
+                        <div className="break-words text-[11.5px] opacity-85">{block.label}</div>
+                        <div className="break-words text-[11.5px] opacity-85">{block.room}</div>
                       </div>
                       {isEditing ? (
                         <button
                           type="button"
                           onClick={() => onRemoveCourse(block.courseId)}
-                          className="rounded-md border border-border px-2 py-1 text-[11px] font-medium text-fg transition-colors hover:bg-surface-hover"
+                          className="shrink-0 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-fg transition-colors hover:bg-surface-hover"
                         >
                           Remove
                         </button>
@@ -740,7 +743,7 @@ export function SemesterPlanner() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="p-4 sm:p-8">
+      <div className="min-w-0 p-4 sm:p-8">
         <div className="mb-6">
           <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
             Semester Planner
@@ -758,7 +761,7 @@ export function SemesterPlanner() {
   }
 
   return (
-    <div className="p-4 sm:p-8">
+    <div className="min-w-0 p-4 sm:p-8">
       <div className="mb-6">
         <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
           Semester Planner

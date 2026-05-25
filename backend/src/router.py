@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import traceback
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -586,6 +587,15 @@ async def route_request(request: Any, env: Any) -> Any:
         return error_response(
             code="database_error",
             message=str(exc),
+            request=request,
+            env=env,
+            status=500,
+        )
+    except Exception:
+        traceback.print_exc()
+        return error_response(
+            code="internal_server_error",
+            message="The server hit an unexpected error while processing this request.",
             request=request,
             env=env,
             status=500,

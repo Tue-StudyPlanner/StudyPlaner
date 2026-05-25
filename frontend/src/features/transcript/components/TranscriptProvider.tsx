@@ -48,6 +48,11 @@ function emptySaveResult(): TranscriptSaveResult {
   }
 }
 
+function shouldFallbackTranscriptImport(error: unknown): boolean {
+  return error instanceof ApiError
+    && (error.code === 'network_error' || error.status === 404 || error.status === 405 || error.status >= 500)
+}
+
 export function TranscriptProvider({ children }: TranscriptProviderProps): JSX.Element {
   const { token } = useAuth()
   const [completedCourses, setCompletedCourses] = useState<CompletedCourse[]>([])
@@ -166,6 +171,51 @@ export function TranscriptProvider({ children }: TranscriptProviderProps): JSX.E
     return await addCompletedCourses([course])
   }
 
+  async function importCompletedCoursesViaFallback(
+    authToken: string,
+    items: BulkCompletedCourseImportItem[],
+  ): Promise<BulkCompletedCourseImportResult> {
+    const existingKeys = new Set(completedCourses.map(normalizeCompletedCourseKey))
+    const seenNewKeys = new Set<string>()
+    const nextCompletedCourses = [...completedCourses]
+    const imported: BulkCompletedCourseImportResult['imported'] = []
+    const skippedDuplicates: BulkCompletedCourseImportResult['skippedDuplicates'] = []
+
+    for (const item of items) {
+      const key = normalizeCompletedCourseKey(item.course)
+      if (existingKeys.has(key) || seenNewKeys.has(key)) {
+        skippedDuplicates.push({
+          id: item.id,
+          message: 'The selected course data is already stored in your completed-course list.',
+        })
+        continue
+      }
+
+      existingKeys.add(key)
+      seenNewKeys.add(key)
+      nextCompletedCourses.push(item.course)
+      imported.push({ id: item.id, message: 'Imported successfully.' })
+    }
+
+    if (imported.length === 0) {
+      return {
+        completedCourses,
+        imported,
+        skippedDuplicates,
+        failed: [],
+      }
+    }
+
+    const savedCompletedCourses = await saveCompletedCourses(authToken, nextCompletedCourses)
+    setCompletedCourses(savedCompletedCourses)
+    return {
+      completedCourses: savedCompletedCourses,
+      imported,
+      skippedDuplicates,
+      failed: [],
+    }
+  }
+
   async function importCompletedCourseItems(
     items: BulkCompletedCourseImportItem[],
   ): Promise<BulkCompletedCourseImportResult | null> {
@@ -190,6 +240,15 @@ export function TranscriptProvider({ children }: TranscriptProviderProps): JSX.E
       setCompletedCourses(result.completedCourses)
       return result
     } catch (error) {
+      if (shouldFallbackTranscriptImport(error)) {
+        try {
+          return await importCompletedCoursesViaFallback(token, items)
+        } catch (fallbackError) {
+          setCompletedCoursesError(normalizeErrorMessage(fallbackError))
+          return null
+        }
+      }
+
       setCompletedCoursesError(normalizeErrorMessage(error))
       return null
     } finally {

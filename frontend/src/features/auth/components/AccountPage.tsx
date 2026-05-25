@@ -203,16 +203,16 @@ export function AccountPage() {
   }
 
   const startSemesters = generateStartSemesters()
-  const inputClass = 'rounded-[10px] border border-border bg-surface px-3.5 py-2.5 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-muted focus:border-primary'
+  const inputClass = 'w-full min-w-0 rounded-[10px] border border-border bg-surface px-3.5 py-2.5 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-muted focus:border-primary'
 
   return (
-    <div className="p-4 sm:p-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
+    <div className="min-w-0 p-4 pb-6 sm:p-8">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
           <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
             Account
           </h1>
-          <p className="text-[13.5px] text-fg-muted">
+          <p className="max-w-[32rem] text-[13.5px] text-fg-muted">
             Sign in to save favorites and personal study progress.
           </p>
         </div>
@@ -231,18 +231,18 @@ export function AccountPage() {
           Loading your account session...
         </div>
       ) : isAuthenticated && user ? (
-        <div className="grid gap-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5 rounded-[10px] border border-border bg-surface px-5 py-3 text-[13px]">
+        <div className="grid min-w-0 gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 rounded-[10px] border border-border bg-surface px-5 py-3 text-[13px]">
             <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">Signed in as</span>
-            <span className="font-medium text-fg">{user.displayName}</span>
-            <span className="text-fg-muted">·</span>
-            <span className="text-fg-muted">{user.email}</span>
+            <span className="break-words font-medium text-fg">{user.displayName}</span>
+            <span className="hidden text-fg-muted sm:inline">·</span>
+            <span className="break-all text-fg-muted">{user.email}</span>
           </div>
 
-          <div className="grid gap-3 lg:grid-cols-2">
-            <section className="flex flex-col rounded-[10px] border border-border bg-surface px-5 py-4">
+          <div className="grid min-w-0 gap-3 lg:grid-cols-2">
+            <section className="min-w-0 flex flex-col rounded-[10px] border border-border bg-surface px-5 py-4">
               <h2 className="mb-3 text-[13.5px] font-semibold text-fg">Study profile</h2>
-              <form onSubmit={(event) => void handleProfileSave(event)} className="flex flex-1 flex-col gap-3">
+              <form onSubmit={(event) => void handleProfileSave(event)} className="flex min-w-0 flex-1 flex-col gap-3">
                 <label className="grid gap-1.5">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">Study program</span>
                   <select
@@ -311,9 +311,9 @@ export function AccountPage() {
               </form>
             </section>
 
-            <section className="flex flex-col rounded-[10px] border border-border bg-surface px-5 py-4">
+            <section className="min-w-0 flex flex-col rounded-[10px] border border-border bg-surface px-5 py-4">
               <h2 className="mb-3 text-[13.5px] font-semibold text-fg">Update credentials</h2>
-              <form onSubmit={(event) => void handleCredentialsSave(event)} className="flex flex-1 flex-col gap-3">
+              <form onSubmit={(event) => void handleCredentialsSave(event)} className="flex min-w-0 flex-1 flex-col gap-3">
                 <label className="grid gap-1.5">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">New email / username</span>
                   <input
@@ -383,8 +383,8 @@ export function AccountPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4.5 lg:grid-cols-[0.72fr_1.28fr]">
-          <section className="rounded-[10px] border border-border bg-surface px-6 py-5.5">
+        <div className="grid min-w-0 gap-4.5 lg:grid-cols-[0.72fr_1.28fr]">
+          <section className="min-w-0 rounded-[10px] border border-border bg-surface px-6 py-5.5">
             <div className="mb-4 flex gap-2">
               <button
                 type="button"
@@ -435,7 +435,7 @@ export function AccountPage() {
             </form>
           </section>
 
-          <section className="rounded-[10px] border border-border bg-surface px-6 py-5.5">
+          <section className="min-w-0 rounded-[10px] border border-border bg-surface px-6 py-5.5">
             <h2 className="mb-3 text-[14px] font-semibold text-fg">What you get with an account</h2>
             <ul className="grid gap-2 pl-5 text-[13.5px] leading-6 text-fg-mid">
               <li className="list-disc">Persist favorite courses across devices</li>
@@ -444,7 +444,7 @@ export function AccountPage() {
             </ul>
           </section>
 
-          <section className="rounded-[10px] border border-border bg-surface px-6 py-5.5 lg:col-span-2">
+          <section className="min-w-0 rounded-[10px] border border-border bg-surface px-6 py-5.5 lg:col-span-2">
             <div className="mb-4">
               <h2 className="text-[14px] font-semibold text-fg">Public study programs</h2>
               <p className="text-[12.5px] text-fg-muted">Browsing the public catalog does not require an account.</p>
@@ -452,14 +452,14 @@ export function AccountPage() {
             {isLoadingOptions ? (
               <div className="text-[13px] text-fg-muted">Loading...</div>
             ) : (
-              <div className="grid gap-3 lg:grid-cols-2">
+              <div className="grid min-w-0 gap-3 lg:grid-cols-2">
                 {studyPrograms.map((sp) => (
-                  <div key={sp.id} className="rounded-lg border border-border-light px-4 py-3">
-                    <div className="text-[13px] font-semibold text-fg">{sp.name}</div>
-                    <div className="text-[12.5px] text-fg-mid">
+                  <div key={sp.id} className="min-w-0 rounded-lg border border-border-light px-4 py-3">
+                    <div className="break-words text-[13px] font-semibold text-fg">{sp.name}</div>
+                    <div className="break-words text-[12.5px] text-fg-mid">
                       {sp.degree || 'Degree n/a'}{sp.totalEcts ? ` · ${sp.totalEcts} ECTS` : ''}
                     </div>
-                    {sp.subject ? <div className="text-[12px] text-fg-muted">{sp.subject}</div> : null}
+                    {sp.subject ? <div className="break-words text-[12px] text-fg-muted">{sp.subject}</div> : null}
                   </div>
                 ))}
               </div>
