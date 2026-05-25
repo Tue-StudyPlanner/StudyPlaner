@@ -14,7 +14,7 @@ export function TopBar() {
   return (
     <>
       <header
-        className="flex shrink-0 items-center justify-between bg-sidebar pl-4 pr-4 sm:pl-6 sm:pr-5 lg:pl-8 lg:pr-6"
+        className="sticky top-0 z-30 flex shrink-0 items-center justify-between bg-sidebar pl-4 pr-4 sm:pl-6 sm:pr-5 lg:pl-8 lg:pr-6"
         style={{ paddingTop: 'env(safe-area-inset-top, 0px)', minHeight: 'calc(3.75rem + env(safe-area-inset-top, 0px))' }}
       >
         <a
@@ -85,6 +85,7 @@ export function TopBar() {
         <div className="fixed inset-0 z-40 bg-black/25 lg:hidden" onClick={() => setIsMenuOpen(false)}>
           <div
             className="absolute right-0 top-0 flex h-full w-[18rem] flex-col border-l border-border bg-surface px-4 py-5 shadow-2xl"
+            style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 1.25rem)' }}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between gap-3">
