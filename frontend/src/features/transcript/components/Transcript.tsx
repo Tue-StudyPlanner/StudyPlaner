@@ -2,10 +2,11 @@ import type { ChangeEvent, DragEvent } from 'react'
 import { useRef, useState } from 'react'
 import { PersonalFeatureNotice } from '../../../shared/components/PersonalFeatureNotice'
 import { StatItem } from '../../../shared/components/StatItem'
+import { useRegulationVersion } from '../../../shared/hooks/useRegulationVersion'
 import { useAuth } from '../../auth'
 import { useCatalogCourses } from '../../courses'
-import type { CompletedCourse, MasterCat } from '../../courses'
-import type { TranscriptCoursePreview, TranscriptImportCandidate, TranscriptImportPhase } from '../types'
+import type { CompletedCourse } from '../../courses'
+import type { TranscriptImportCandidate, TranscriptImportPhase } from '../types'
 import { useStudyStats } from '../hooks/useStudyStats'
 import { useTranscript } from '../hooks/useTranscript'
 import {
@@ -17,32 +18,13 @@ import { ManualCompletedCourseForm } from './ManualCompletedCourseForm'
 import { SavedCompletedCourseRow } from './SavedCompletedCourseRow'
 import { TranscriptImportRow } from './TranscriptImportRow'
 import { TranscriptUploadCard } from './TranscriptUploadCard'
+import type { RegulationRuleGroup } from '../../../shared/utils/regulation'
 
 const MAX_TRANSCRIPT_FILE_SIZE_BYTES = 10 * 1024 * 1024
 const CATALOG_LIMIT = 200
 
 function isPdfFile(file: File): boolean {
   return file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
-}
-
-function toManualCompletedCourse(
-  course: TranscriptCoursePreview,
-  semester: string,
-  grade: number | null,
-  masterCat: MasterCat,
-): CompletedCourse {
-  return {
-    id: `manual-${course.id}-${Date.now()}`,
-    courseId: course.id,
-    courseNumber: course.number,
-    externalCourseCode: course.number,
-    title: course.title,
-    ects: course.ects ?? 0,
-    masterCat,
-    grade,
-    semester,
-    source: 'manual',
-  }
 }
 
 function toImportedCompletedCourse(candidate: TranscriptImportCandidate): CompletedCourse {
@@ -54,6 +36,7 @@ function toImportedCompletedCourse(candidate: TranscriptImportCandidate): Comple
     title: candidate.matchedCourse?.title ?? candidate.title,
     ects: candidate.ects ?? 0,
     masterCat: candidate.masterCat,
+    studyAreaCode: candidate.studyAreaCode,
     grade: candidate.grade,
     semester: candidate.semester,
     source: 'transcript_import',
@@ -64,6 +47,7 @@ function UploadReviewSection({
   importCandidates,
   importPhase,
   studyProgramCode,
+  regulationRuleGroups,
   onDiscardAll,
   onDiscardCandidate,
   onConfirm,
@@ -72,6 +56,7 @@ function UploadReviewSection({
   importCandidates: TranscriptImportCandidate[]
   importPhase: TranscriptImportPhase
   studyProgramCode?: string | null
+  regulationRuleGroups: RegulationRuleGroup[]
   onDiscardAll: () => void
   onDiscardCandidate: (candidateId: string) => void
   onConfirm: () => Promise<void>
@@ -116,6 +101,7 @@ function UploadReviewSection({
             key={candidate.id}
             candidate={candidate}
             studyProgramCode={studyProgramCode}
+            regulationRuleGroups={regulationRuleGroups}
             onDiscard={() => onDiscardCandidate(candidate.id)}
             onChange={onCandidateChange}
           />
@@ -134,6 +120,11 @@ function AuthenticatedTranscript() {
   const [isDragActive, setIsDragActive] = useState<boolean>(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const {
+    regulationVersion,
+    isLoadingRegulationVersion,
+    regulationVersionError,
+  } = useRegulationVersion(user?.profile.regulationVersionCode)
+  const {
     completedCourses,
     isLoadingCompletedCourses,
     isSavingCompletedCourses,
@@ -141,7 +132,6 @@ function AuthenticatedTranscript() {
     addCompletedCourse,
     addCompletedCourses,
     removeCourse,
-    setCategory,
     updateCourse,
     clearCompletedCoursesError,
   } = useTranscript()
@@ -158,15 +148,10 @@ function AuthenticatedTranscript() {
     { label: 'Average grade', value: averageGrade !== null ? averageGrade.toFixed(2) : '–' },
   ]
 
-  async function handleManualCourseAdd(
-    course: TranscriptCoursePreview,
-    semester: string,
-    grade: number | null,
-    masterCat: MasterCat,
-  ): Promise<boolean> {
+  async function handleManualCourseAdd(course: CompletedCourse): Promise<boolean> {
     clearCompletedCoursesError()
     setImportNotice(null)
-    const result = await addCompletedCourse(toManualCompletedCourse(course, semester, grade, masterCat))
+    const result = await addCompletedCourse(course)
     if (!result.saved) {
       return false
     }
@@ -360,12 +345,26 @@ function AuthenticatedTranscript() {
         <ManualCompletedCourseForm
           defaultSemester={user?.profile.currentSemesterLabel}
           studyProgramCode={user?.profile.studyProgramCode}
+          regulationVersionCode={user?.profile.regulationVersionCode}
+          regulationRuleGroups={regulationVersion?.ruleGroups ?? []}
           isSaving={isSavingCompletedCourses}
           onSave={handleManualCourseAdd}
         />
       </div>
 
       <div className="col-span-3 flex flex-col gap-3.5">
+        {regulationVersionError ? (
+          <div className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13px] text-primary">
+            {regulationVersionError}
+          </div>
+        ) : null}
+
+        {isLoadingRegulationVersion ? (
+          <div className="rounded-[10px] border border-border bg-surface px-4 py-3 text-[13px] text-fg-muted">
+            Loading your active regulation settings...
+          </div>
+        ) : null}
+
         {completedCoursesError ? (
           <div className="rounded-[10px] border border-rose-200 bg-rose-50 px-4 py-3 text-[13px] text-rose-700">
             {completedCoursesError}
@@ -400,6 +399,7 @@ function AuthenticatedTranscript() {
             importCandidates={importCandidates}
             importPhase={importPhase}
             studyProgramCode={user?.profile.studyProgramCode}
+            regulationRuleGroups={regulationVersion?.ruleGroups ?? []}
             onDiscardAll={resetImportReview}
             onDiscardCandidate={discardImportCandidate}
             onConfirm={handleImportConfirmation}
@@ -425,14 +425,10 @@ function AuthenticatedTranscript() {
                   key={course.id}
                   course={course}
                   isLast={index === completedCourses.length - 1}
+                  studyProgramCode={user?.profile.studyProgramCode}
+                  regulationRuleGroups={regulationVersion?.ruleGroups ?? []}
                   onRemove={() => void removeCourse(course.id)}
-                  onCategoryChange={(cat) => void setCategory(course.id, cat)}
-                  onSemesterChange={(semester) => void updateCourse(course.id, { semester })}
-                  onGradeChange={(grade) =>
-                    void updateCourse(course.id, {
-                      grade: grade.trim() === '' ? null : Number(grade),
-                    })
-                  }
+                  onCourseChange={(updates) => void updateCourse(course.id, updates)}
                 />
               ))}
             </div>

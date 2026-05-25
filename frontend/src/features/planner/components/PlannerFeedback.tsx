@@ -1,85 +1,82 @@
 import { useMemo } from 'react'
-import type { Course, StudyAreaOption } from '../../courses'
+import type { Course } from '../../courses'
+import type { RegulationRuleGroup } from '../../../shared/utils/regulation'
+import { buildRelevantCourseAreaOptions } from '../../../shared/utils/regulation'
 
-interface CoverageItem {
-  key: string
-  label: string
-  courseCount: number
-  ects: number
+interface FulfilledPlannerArea {
+  code: string
+  name: string
+  requiredEcts: number
+  earnedEcts: number
+  courses: Course[]
+}
+
+function resolveCourseAreaCode(
+  course: Course,
+  studyProgramCode: string | null,
+  planAssignments: Record<string, string>,
+): string | null {
+  const relevantAreaOptions = buildRelevantCourseAreaOptions(course.studyAreaOptions, studyProgramCode)
+  const manualAssignment = planAssignments[course.id]
+  if (manualAssignment && relevantAreaOptions.some((option) => option.code === manualAssignment)) {
+    return manualAssignment
+  }
+  return relevantAreaOptions[0]?.code ?? null
+}
+
+function buildFulfilledAreas(
+  courses: Course[],
+  studyProgramCode: string | null,
+  planAssignments: Record<string, string>,
+  regulationRuleGroups: RegulationRuleGroup[],
+): FulfilledPlannerArea[] {
+  const ruleGroupByCode = new Map(
+    regulationRuleGroups.map((ruleGroup) => [ruleGroup.code, ruleGroup]),
+  )
+  const areaMap = new Map<string, FulfilledPlannerArea>()
+
+  courses.forEach((course) => {
+    const areaCode = resolveCourseAreaCode(course, studyProgramCode, planAssignments)
+    if (!areaCode) {
+      return
+    }
+    const ruleGroup = ruleGroupByCode.get(areaCode)
+    if (!ruleGroup) {
+      return
+    }
+
+    const areaEntry = areaMap.get(areaCode) ?? {
+      code: areaCode,
+      name: ruleGroup.name,
+      requiredEcts: ruleGroup.requiredEcts ?? 0,
+      earnedEcts: 0,
+      courses: [],
+    }
+    areaEntry.earnedEcts += course.ects ?? 0
+    areaEntry.courses.push(course)
+    areaMap.set(areaCode, areaEntry)
+  })
+
+  return [...areaMap.values()]
+    .filter((area) => area.requiredEcts > 0 && area.earnedEcts >= area.requiredEcts)
+    .sort((left, right) => left.name.localeCompare(right.name))
 }
 
 function getAssignableOptions(
   course: Course,
   studyProgramCode: string | null,
 ): Array<{ code: string; label: string }> {
-  const options = course.studyAreaOptions ?? []
-  const filtered = options.filter((o) => !studyProgramCode || o.programCode === studyProgramCode)
-  const relevant = filtered.length > 0 ? filtered : options
-  const seen = new Set<string>()
-  return relevant
-    .filter((o): o is StudyAreaOption & { studyAreaCode: string } => Boolean(o.studyAreaCode))
-    .map((o) => ({ code: o.studyAreaCode, label: o.studyAreaName || o.studyAreaCode }))
-    .filter((o) => {
-      if (seen.has(o.code)) {
-        return false
-      }
-      seen.add(o.code)
-      return true
-    })
-}
-
-function buildCoverage(
-  courses: Course[],
-  studyProgramCode: string | null,
-  planAssignments: Record<string, string>,
-): CoverageItem[] {
-  const byKey = new Map<string, CoverageItem>()
-
-  courses.forEach((course) => {
-    const manualCode = planAssignments[course.id]
-    if (manualCode) {
-      const label =
-        course.studyAreaOptions?.find((o) => o.studyAreaCode === manualCode)?.studyAreaName ||
-        manualCode
-      const item = byKey.get(manualCode) ?? { key: manualCode, label, courseCount: 0, ects: 0 }
-      item.courseCount += 1
-      item.ects += course.ects ?? 0
-      byKey.set(manualCode, item)
-      return
-    }
-
-    const options = course.studyAreaOptions ?? []
-    const filtered = options.filter((o) => !studyProgramCode || o.programCode === studyProgramCode)
-    const relevant = filtered.length > 0 ? filtered : options
-    const seen = new Set<string>()
-
-    relevant.forEach((o) => {
-      const key = o.studyAreaCode || o.studyAreaName
-      if (!key || seen.has(key)) {
-        return
-      }
-      seen.add(key)
-      const item = byKey.get(key) ?? {
-        key,
-        label: o.studyAreaName || key,
-        courseCount: 0,
-        ects: 0,
-      }
-      item.courseCount += 1
-      item.ects += course.ects ?? 0
-      byKey.set(key, item)
-    })
-  })
-
-  return [...byKey.values()].sort(
-    (a, b) => b.ects - a.ects || a.label.localeCompare(b.label),
-  )
+  return buildRelevantCourseAreaOptions(course.studyAreaOptions, studyProgramCode).map((option) => ({
+    code: option.code,
+    label: option.label,
+  }))
 }
 
 interface PlannerFeedbackProps {
   plannedCourses: Course[]
   studyProgramCode: string | null
   planAssignments: Record<string, string>
+  regulationRuleGroups: RegulationRuleGroup[]
   isEditing: boolean
   onSetAssignment: (courseId: string, areaCode: string | null) => void
 }
@@ -88,71 +85,97 @@ export function PlannerFeedback({
   plannedCourses,
   studyProgramCode,
   planAssignments,
+  regulationRuleGroups,
   isEditing,
   onSetAssignment,
 }: PlannerFeedbackProps) {
   const totalEcts = useMemo(
-    () => plannedCourses.reduce((sum, c) => sum + (c.ects ?? 0), 0),
+    () => plannedCourses.reduce((sum, course) => sum + (course.ects ?? 0), 0),
     [plannedCourses],
   )
 
-  const coverageItems = useMemo(
-    () => buildCoverage(plannedCourses, studyProgramCode, planAssignments),
-    [plannedCourses, studyProgramCode, planAssignments],
+  const fulfilledAreas = useMemo(
+    () =>
+      buildFulfilledAreas(
+        plannedCourses,
+        studyProgramCode,
+        planAssignments,
+        regulationRuleGroups,
+      ),
+    [plannedCourses, studyProgramCode, planAssignments, regulationRuleGroups],
   )
 
   return (
-    <div className="flex flex-col gap-3.5">
-      <div className="rounded-[10px] border border-border bg-surface px-4 py-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-          Planned ECTS
+    <div className="grid gap-4.5">
+      <div className="grid gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
+        <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
+            Planned ECTS
+          </div>
+          <div className="mt-1 text-[30px] font-semibold leading-none text-fg">{totalEcts}</div>
+          <div className="mt-1 text-[12px] text-fg-muted">
+            {plannedCourses.length} planned course{plannedCourses.length !== 1 ? 's' : ''}
+          </div>
         </div>
-        <div className="mt-1 text-[28px] font-semibold leading-none text-fg">{totalEcts}</div>
-        <div className="mt-1 text-[12px] text-fg-muted">
-          {plannedCourses.length} course{plannedCourses.length !== 1 ? 's' : ''}
-        </div>
-      </div>
 
-      <div className="rounded-[10px] border border-border bg-surface px-4 py-4">
-        <div className="mb-3 text-[13px] font-semibold text-fg">Block coverage</div>
-        {!studyProgramCode ? (
-          <div className="mb-3 rounded-md border border-border-light bg-surface-hover/60 px-3 py-2 text-[12px] text-fg-muted">
-            Set your study program in Account for program-specific blocks.
+        <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[13px] font-semibold text-fg">Fulfilled regulation parts</div>
+              <p className="mt-1 text-[12px] text-fg-muted">
+                Based only on the courses currently placed in the weekly schedule.
+              </p>
+            </div>
           </div>
-        ) : null}
-        {coverageItems.length === 0 ? (
-          <div className="text-[12.5px] text-fg-muted">
-            Add courses to see block coverage.
-          </div>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {coverageItems.map((item) => (
-              <div
-                key={item.key}
-                className="flex items-center justify-between gap-2 rounded-md border border-border-light bg-surface-hover/40 px-3 py-2"
-              >
-                <div className="min-w-0">
-                  <div className="truncate text-[12.5px] font-medium text-fg">{item.label}</div>
-                  <div className="text-[11.5px] text-fg-muted">
-                    {item.courseCount} course{item.courseCount !== 1 ? 's' : ''}
+
+          {!studyProgramCode || regulationRuleGroups.length === 0 ? (
+            <div className="rounded-md border border-dashed border-border px-4 py-3 text-[12.5px] text-fg-muted">
+              Set your study program in Account to see the planner regulation summary.
+            </div>
+          ) : fulfilledAreas.length === 0 ? (
+            <div className="rounded-md border border-dashed border-border px-4 py-3 text-[12.5px] text-fg-muted">
+              No regulation part is fully covered by the current weekly plan yet.
+            </div>
+          ) : (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {fulfilledAreas.map((area) => (
+                <div
+                  key={area.code}
+                  className="rounded-[10px] border border-border-light bg-surface-hover/35 px-4 py-3"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-[12.5px] font-semibold text-fg">{area.name}</div>
+                      <div className="text-[11.5px] text-fg-muted">{area.code}</div>
+                    </div>
+                    <div className="text-[12px] font-semibold text-fg">
+                      {area.earnedEcts}/{area.requiredEcts} ECTS
+                    </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {area.courses.map((course) => (
+                      <span
+                        key={`${area.code}-${course.id}`}
+                        className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-fg-muted"
+                      >
+                        {course.title}
+                      </span>
+                    ))}
                   </div>
                 </div>
-                <div className="shrink-0 text-[13px] font-semibold text-fg">
-                  {item.ects} ECTS
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {isEditing && plannedCourses.length > 0 ? (
-        <div className="rounded-[10px] border border-border bg-surface px-4 py-4">
-          <div className="mb-3 text-[13px] font-semibold text-fg">Block assignment</div>
+        <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
+          <div className="mb-3 text-[13px] font-semibold text-fg">Planner assignment</div>
           <p className="mb-3 text-[12px] text-fg-muted">
-            Set which regulation block each course counts toward.
+            Choose which regulation area each planned course should count toward when more than one option exists.
           </p>
-          <div className="flex flex-col gap-2">
+          <div className="grid gap-2 lg:grid-cols-2">
             {plannedCourses.map((course) => {
               const options = getAssignableOptions(course, studyProgramCode)
               const currentValue = planAssignments[course.id] ?? ''
@@ -162,19 +185,17 @@ export function PlannerFeedback({
                     {course.title}
                   </div>
                   {options.length === 0 ? (
-                    <div className="text-[11.5px] text-fg-muted">No regulation blocks found</div>
+                    <div className="text-[11.5px] text-fg-muted">No regulation areas found for this course</div>
                   ) : (
                     <select
                       value={currentValue}
-                      onChange={(e) =>
-                        onSetAssignment(course.id, e.target.value || null)
-                      }
+                      onChange={(event) => onSetAssignment(course.id, event.target.value || null)}
                       className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-[12px] text-fg outline-none focus:border-primary"
                     >
                       <option value="">Auto-detect</option>
-                      {options.map((opt) => (
-                        <option key={opt.code} value={opt.code}>
-                          {opt.label}
+                      {options.map((option) => (
+                        <option key={option.code} value={option.code}>
+                          {option.label}
                         </option>
                       ))}
                     </select>

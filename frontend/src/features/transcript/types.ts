@@ -1,4 +1,4 @@
-import type { MasterCat } from '../courses'
+import type { MasterCat, StudyAreaOption } from '../courses'
 
 export interface StudyStats {
   totalEcts: number
@@ -16,6 +16,8 @@ export interface TranscriptCoursePreview {
   title: string
   ects: number | null
   masterCats: MasterCat[]
+  studyAreaOptions?: StudyAreaOption[]
+  regulationAreaCodes?: string[]
 }
 
 export interface ParsedTranscriptEntry {
@@ -45,6 +47,7 @@ export interface TranscriptImportCandidate {
   grade: number | null
   ects: number | null
   masterCat: MasterCat
+  studyAreaCode: string | null
   status: TranscriptImportStatus
   statusDetail: string
   parseIssues: string[]

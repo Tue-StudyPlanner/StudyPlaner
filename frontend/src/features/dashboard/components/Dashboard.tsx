@@ -6,7 +6,6 @@ import { MASTER_CATEGORY_META } from '../masterCategoryMeta'
 import type { CategoryProgress as CategoryProgressItem, ProgressSnapshot, ThesisProgress } from '../types'
 import { useProgressSnapshot } from '../hooks/useProgressSnapshot'
 import { CategoryProgress } from './CategoryProgress'
-import { CompletedCourses } from './CompletedCourses'
 import { RegulationProgress } from './RegulationProgress'
 import { SpecializationCircle } from './SpecializationCircle'
 import { getCurrentSemesterLabel } from '../../planner/utils/semesterLabels'
@@ -127,8 +126,8 @@ function AuthenticatedDashboard() {
         </div>
       ) : null}
 
-      <div className="mt-4.5">
-        <CompletedCourses />
+      <div className="mt-4.5 rounded-[10px] border border-border bg-surface px-6 py-4 text-[13px] text-fg-muted">
+        Browse your regulation parts above to inspect which completed courses are already credited in each section.
       </div>
     </div>
   )

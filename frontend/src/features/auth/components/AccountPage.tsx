@@ -68,6 +68,8 @@ export function AccountPage() {
   const [isLoadingOptions, setIsLoadingOptions] = useState<boolean>(false)
   const [draftStudyProgramId, setDraftStudyProgramId] = useState<number | null | undefined>(undefined)
   const [draftCurrentSemesterLabel, setDraftCurrentSemesterLabel] = useState<string | undefined>(undefined)
+  const [draftPlannerMobileMode, setDraftPlannerMobileMode] = useState<'auto' | 'mobile' | 'desktop' | undefined>(undefined)
+  const [draftPlannerMobileLayout, setDraftPlannerMobileLayout] = useState<'compact-grid' | 'weekly-list' | undefined>(undefined)
 
   const [credCurrentPassword, setCredCurrentPassword] = useState<string>('')
   const [credNewIdentifier, setCredNewIdentifier] = useState<string>('')
@@ -96,6 +98,8 @@ export function AccountPage() {
   const selectedStudyProgramId =
     draftStudyProgramId !== undefined ? draftStudyProgramId : (user?.profile.studyProgramId ?? null)
   const currentSemesterLabel = draftCurrentSemesterLabel ?? (user?.profile.currentSemesterLabel ?? '')
+  const plannerMobileMode = draftPlannerMobileMode ?? user?.profile.plannerMobileMode ?? 'auto'
+  const plannerMobileLayout = draftPlannerMobileLayout ?? user?.profile.plannerMobileLayout ?? 'compact-grid'
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
@@ -107,12 +111,16 @@ export function AccountPage() {
         await register({ identifier, password, studyProgramId: selectedStudyProgramId, currentSemesterLabel: currentSemesterLabel.trim() || null })
         setDraftStudyProgramId(undefined)
         setDraftCurrentSemesterLabel(undefined)
+        setDraftPlannerMobileMode(undefined)
+        setDraftPlannerMobileLayout(undefined)
         navigate(ROUTES.dashboard)
         return
       }
       await login({ identifier, password })
       setDraftStudyProgramId(undefined)
       setDraftCurrentSemesterLabel(undefined)
+      setDraftPlannerMobileMode(undefined)
+      setDraftPlannerMobileLayout(undefined)
       navigate(ROUTES.dashboard)
     } catch (submitError) {
       setError(normalizeErrorMessage(submitError))
@@ -129,6 +137,8 @@ export function AccountPage() {
       await logout()
       setDraftStudyProgramId(undefined)
       setDraftCurrentSemesterLabel(undefined)
+      setDraftPlannerMobileMode(undefined)
+      setDraftPlannerMobileLayout(undefined)
       navigate(ROUTES.dashboard)
     } catch (logoutError) {
       setError(normalizeErrorMessage(logoutError))
@@ -143,9 +153,16 @@ export function AccountPage() {
     setError(null)
     setMessage(null)
     try {
-      await saveProfile({ studyProgramId: selectedStudyProgramId, currentSemesterLabel: currentSemesterLabel.trim() || null })
+      await saveProfile({
+        studyProgramId: selectedStudyProgramId,
+        currentSemesterLabel: currentSemesterLabel.trim() || null,
+        plannerMobileMode,
+        plannerMobileLayout,
+      })
       setDraftStudyProgramId(undefined)
       setDraftCurrentSemesterLabel(undefined)
+      setDraftPlannerMobileMode(undefined)
+      setDraftPlannerMobileLayout(undefined)
       setMessage('Study profile updated.')
     } catch (profileError) {
       setError(normalizeErrorMessage(profileError))
@@ -256,6 +273,32 @@ export function AccountPage() {
                     ))}
                   </select>
                 </label>
+                <label className="grid gap-1.5">
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">Planner mobile mode</span>
+                  <select
+                    value={plannerMobileMode}
+                    onChange={(event) => setDraftPlannerMobileMode(event.target.value as 'auto' | 'mobile' | 'desktop')}
+                    className={inputClass}
+                  >
+                    <option value="auto">Automatic by screen size</option>
+                    <option value="mobile">Always use mobile planner</option>
+                    <option value="desktop">Always use desktop planner</option>
+                  </select>
+                </label>
+                <label className="grid gap-1.5">
+                  <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-fg-muted">Planner mobile layout</span>
+                  <select
+                    value={plannerMobileLayout}
+                    onChange={(event) => setDraftPlannerMobileLayout(event.target.value as 'compact-grid' | 'weekly-list')}
+                    className={inputClass}
+                  >
+                    <option value="compact-grid">Compact weekly grid</option>
+                    <option value="weekly-list">Weekly list view</option>
+                  </select>
+                </label>
+                <div className="rounded-[10px] border border-border-light bg-surface-hover/40 px-4 py-3 text-[12px] text-fg-muted">
+                  Use these settings to try both mobile planner variants and to force mobile or desktop planner behavior when needed.
+                </div>
                 <div className="mt-auto flex justify-end">
                   <button
                     type="submit"

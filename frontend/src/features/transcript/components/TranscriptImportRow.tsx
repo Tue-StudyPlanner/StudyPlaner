@@ -1,10 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { MasterCat } from '../../courses'
 import type { TranscriptImportCandidate } from '../types'
 import { applyCatalogCourseMatch, updateTranscriptImportCandidate } from '../utils/buildTranscriptImportCandidates'
 import { CatalogCoursePicker } from './CatalogCoursePicker'
 import { CategoryToggle } from './CategoryToggle'
 import { EditIcon, TrashIcon } from './icons'
+import { StudyAreaAssignmentField } from './StudyAreaAssignmentField'
+import type { RegulationRuleGroup } from '../../../shared/utils/regulation'
+import {
+  buildFlexibleRegulationAreaOptions,
+  buildRelevantCourseAreaOptions,
+  studyAreaCodeToMasterCat,
+} from '../../../shared/utils/regulation'
 
 const ALL_CATEGORIES: MasterCat[] = ['TECH', 'THEO', 'PRAK', 'INFO', 'BASIS']
 
@@ -62,6 +69,7 @@ function statusLabel(status: TranscriptImportCandidate['status']): string {
 interface TranscriptImportRowProps {
   candidate: TranscriptImportCandidate
   studyProgramCode?: string | null
+  regulationRuleGroups: RegulationRuleGroup[]
   onChange: (candidate: TranscriptImportCandidate) => void
   onDiscard: () => void
 }
@@ -69,12 +77,50 @@ interface TranscriptImportRowProps {
 export function TranscriptImportRow({
   candidate,
   studyProgramCode,
+  regulationRuleGroups,
   onChange,
   onDiscard,
 }: TranscriptImportRowProps) {
   const [isExpanded, setIsExpanded] = useState<boolean>(false)
   const displayTitle = candidate.matchedCourse?.title ?? candidate.title
   const displayNumber = candidate.matchedCourse?.number ?? candidate.courseNumber ?? 'Catalog course required'
+  const hasActiveRegulation = regulationRuleGroups.length > 0
+  const mappedAreaOptions = useMemo(
+    () => buildRelevantCourseAreaOptions(candidate.matchedCourse?.studyAreaOptions, studyProgramCode),
+    [candidate.matchedCourse?.studyAreaOptions, studyProgramCode],
+  )
+  const flexibleAreaOptions = useMemo(
+    () => buildFlexibleRegulationAreaOptions(regulationRuleGroups),
+    [regulationRuleGroups],
+  )
+  const areaOptions = mappedAreaOptions.length > 0 ? mappedAreaOptions : flexibleAreaOptions
+  const isAreaLocked = mappedAreaOptions.length === 1
+
+  useEffect(() => {
+    if (isAreaLocked) {
+      const lockedAreaCode = mappedAreaOptions[0].code
+      if (candidate.studyAreaCode !== lockedAreaCode) {
+        onChange(
+          updateTranscriptImportCandidate(candidate, {
+            studyAreaCode: lockedAreaCode,
+            masterCat: studyAreaCodeToMasterCat(lockedAreaCode) ?? candidate.masterCat,
+          }),
+        )
+      }
+      return
+    }
+
+    if (mappedAreaOptions.length > 1) {
+      if (!mappedAreaOptions.some((option) => option.code === candidate.studyAreaCode)) {
+        onChange(updateTranscriptImportCandidate(candidate, { studyAreaCode: null }))
+      }
+      return
+    }
+
+    if (candidate.studyAreaCode && !flexibleAreaOptions.some((option) => option.code === candidate.studyAreaCode)) {
+      onChange(updateTranscriptImportCandidate(candidate, { studyAreaCode: null }))
+    }
+  }, [candidate, candidate.studyAreaCode, flexibleAreaOptions, isAreaLocked, mappedAreaOptions, onChange])
 
   return (
     <div className={`rounded-[10px] border px-5 py-4.5 ${cardClasses(candidate.status)}`}>
@@ -197,21 +243,44 @@ export function TranscriptImportRow({
             </label>
           </div>
 
-          <div>
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-              Category
+          {hasActiveRegulation ? (
+            <StudyAreaAssignmentField
+              value={candidate.studyAreaCode}
+              options={areaOptions}
+              locked={isAreaLocked}
+              helpText={
+                mappedAreaOptions.length > 1
+                  ? 'This course matches multiple regulation areas. Choose the correct one before importing.'
+                  : mappedAreaOptions.length === 1
+                    ? 'This regulation area is fixed by the active examination regulation.'
+                    : 'Unmatched courses can only be assigned to flexible regulation areas or ÜBK.'
+              }
+              onChange={(nextStudyAreaCode) =>
+                onChange(
+                  updateTranscriptImportCandidate(candidate, {
+                    studyAreaCode: nextStudyAreaCode,
+                    masterCat: studyAreaCodeToMasterCat(nextStudyAreaCode) ?? candidate.masterCat,
+                  }),
+                )
+              }
+            />
+          ) : (
+            <div>
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
+                Category
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {ALL_CATEGORIES.map((cat) => (
+                  <CategoryToggle
+                    key={cat}
+                    cat={cat}
+                    active={cat === candidate.masterCat}
+                    onClick={() => onChange(updateTranscriptImportCandidate(candidate, { masterCat: cat }))}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1">
-              {ALL_CATEGORIES.map((cat) => (
-                <CategoryToggle
-                  key={cat}
-                  cat={cat}
-                  active={cat === candidate.masterCat}
-                  onClick={() => onChange(updateTranscriptImportCandidate(candidate, { masterCat: cat }))}
-                />
-              ))}
-            </div>
-          </div>
+          )}
         </div>
       ) : null}
     </div>
