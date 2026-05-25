@@ -76,6 +76,7 @@ def _build_completed_course_detail(completed_course: dict[str, Any]) -> dict[str
         'courseNumber': course_number or external_course_code,
         'title': _safe_text(completed_course.get('title')) or 'Untitled course',
         'ects': _normalize_float(completed_course.get('ects')) or 0.0,
+        'grade': _normalize_float(completed_course.get('grade')),
         'semester': completed_course.get('semester'),
         'masterCat': completed_course.get('masterCat'),
         'studyAreaCode': _normalize_study_area_code(completed_course.get('studyAreaCode')),

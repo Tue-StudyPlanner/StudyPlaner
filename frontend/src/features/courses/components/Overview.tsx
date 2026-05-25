@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { CourseCard } from '../../../shared/components/CourseCard'
 import { useRegulationVersion } from '../../../shared/hooks/useRegulationVersion'
-import { buildRelevantCourseAreaOptions } from '../../../shared/utils/regulation'
+import {
+  buildFlexibleRegulationAreaOptions,
+  buildRelevantCourseAreaOptions,
+} from '../../../shared/utils/regulation'
 import { useAuth } from '../../auth'
 import { useFavorites } from '../../favorites'
 import { useCatalogCourses } from '../hooks/useCatalogCourses'
@@ -34,16 +37,8 @@ function FilterChip({
   )
 }
 
-function toggleNumberSelection(selectedValues: number[], nextValue: number): number[] {
-  return selectedValues.includes(nextValue)
-    ? selectedValues.filter((value) => value !== nextValue)
-    : [...selectedValues, nextValue].sort((left, right) => left - right)
-}
-
-function toggleStringSelection(selectedValues: string[], nextValue: string): string[] {
-  return selectedValues.includes(nextValue)
-    ? selectedValues.filter((value) => value !== nextValue)
-    : [...selectedValues, nextValue]
+function toggleInSelection<T>(items: T[], item: T): T[] {
+  return items.includes(item) ? items.filter((i) => i !== item) : [...items, item]
 }
 
 function courseMatchesStudyAreaFilter(
@@ -54,11 +49,10 @@ function courseMatchesStudyAreaFilter(
   if (selectedStudyAreaCodes.length === 0) {
     return true
   }
-
   const relevantAreaCodes = buildRelevantCourseAreaOptions(course.studyAreaOptions, studyProgramCode).map(
     (option) => option.code,
   )
-  return selectedStudyAreaCodes.some((studyAreaCode) => relevantAreaCodes.includes(studyAreaCode))
+  return selectedStudyAreaCodes.some((code) => relevantAreaCodes.includes(code))
 }
 
 export function CoursesOverview() {
@@ -70,29 +64,17 @@ export function CoursesOverview() {
   const { isAuthenticated, user } = useAuth()
   const studyProgramCode = user?.profile.studyProgramCode ?? null
   const { courses, isLoading, error } = useCatalogCourses(search, CATALOG_LIMIT)
-  const {
-    regulationVersion,
-    isLoadingRegulationVersion,
-    regulationVersionError,
-  } = useRegulationVersion(user?.profile.regulationVersionCode)
-  const {
-    isFavorite,
-    isLoadingFavorites,
-    isSavingFavorites,
-    favoritesError,
-    toggleFavorite,
-  } = useFavorites()
+  const { regulationVersion, isLoadingRegulationVersion, regulationVersionError } =
+    useRegulationVersion(user?.profile.regulationVersionCode)
+  const { isFavorite, isLoadingFavorites, isSavingFavorites, favoritesError, toggleFavorite } =
+    useFavorites()
 
   useEffect(() => {
     const sentinel = sentinelRef.current
-    if (!sentinel) {
-      return
-    }
+    if (!sentinel) return
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisibleCount((prev) => prev + PAGE_SIZE)
-        }
+        if (entries[0]?.isIntersecting) setVisibleCount((prev) => prev + PAGE_SIZE)
       },
       { rootMargin: '200px' },
     )
@@ -101,16 +83,15 @@ export function CoursesOverview() {
   }, [courses])
 
   const availableEctsValues = useMemo(
-    () => [...new Set(courses.map((course) => course.ects).filter((ects): ects is number => ects !== null))].sort((left, right) => left - right),
+    () =>
+      [...new Set(courses.map((c) => c.ects).filter((v): v is number => v !== null))].sort(
+        (a, b) => a - b,
+      ),
     [courses],
   )
 
   const topicAreaOptions = useMemo(
-    () =>
-      (regulationVersion?.ruleGroups ?? []).map((ruleGroup) => ({
-        code: ruleGroup.code,
-        label: ruleGroup.name,
-      })),
+    () => buildFlexibleRegulationAreaOptions(regulationVersion?.ruleGroups ?? []),
     [regulationVersion?.ruleGroups],
   )
 
@@ -120,11 +101,7 @@ export function CoursesOverview() {
         if (selectedEctsValues.length > 0 && (!course.ects || !selectedEctsValues.includes(course.ects))) {
           return false
         }
-        return courseMatchesStudyAreaFilter(
-          course,
-          selectedStudyAreaCodes,
-          studyProgramCode,
-        )
+        return courseMatchesStudyAreaFilter(course, selectedStudyAreaCodes, studyProgramCode)
       }),
     [courses, selectedEctsValues, selectedStudyAreaCodes, studyProgramCode],
   )
@@ -134,7 +111,7 @@ export function CoursesOverview() {
   const hasActiveFilters = selectedEctsValues.length > 0 || selectedStudyAreaCodes.length > 0
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <h2 className="mb-2 text-2xl font-bold">Course Catalog</h2>
       <p className="mb-6 text-fg-mid">Browse the Informatics catalog from the database.</p>
 
@@ -199,7 +176,11 @@ export function CoursesOverview() {
                   key={ectsValue}
                   label={`${ectsValue} ECTS`}
                   active={selectedEctsValues.includes(ectsValue)}
-                  onClick={() => setSelectedEctsValues((currentValue) => toggleNumberSelection(currentValue, ectsValue))}
+                  onClick={() =>
+                    setSelectedEctsValues((prev) =>
+                      toggleInSelection(prev, ectsValue).sort((a, b) => a - b),
+                    )
+                  }
                 />
               ))}
             </div>
@@ -224,22 +205,21 @@ export function CoursesOverview() {
               <div className="text-[12.5px] text-fg-muted">Loading your active regulation filters...</div>
             ) : topicAreaOptions.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {topicAreaOptions.map((topicAreaOption) => (
+                {topicAreaOptions.map((option) => (
                   <FilterChip
-                    key={topicAreaOption.code}
-                    label={topicAreaOption.label}
-                    active={selectedStudyAreaCodes.includes(topicAreaOption.code)}
+                    key={option.code}
+                    label={option.code}
+                    active={selectedStudyAreaCodes.includes(option.code)}
                     onClick={() =>
-                      setSelectedStudyAreaCodes((currentValue) =>
-                        toggleStringSelection(currentValue, topicAreaOption.code),
-                      )
+                      setSelectedStudyAreaCodes((prev) => toggleInSelection(prev, option.code))
                     }
                   />
                 ))}
               </div>
             ) : (
               <div className="rounded-[10px] border border-dashed border-border px-4 py-3 text-[12.5px] text-fg-muted">
-                Select a study program with an active examination regulation in Account to filter the catalog by regulation topic areas.
+                Select a study program with an active examination regulation in Account to filter the
+                catalog by regulation topic areas.
               </div>
             )}
           </div>
@@ -271,7 +251,9 @@ export function CoursesOverview() {
         </div>
       ) : filteredCourses.length === 0 ? (
         <div className="rounded-[10px] border border-dashed border-border bg-surface px-8 py-15 text-center text-[13.5px] text-fg-muted">
-          {hasActiveFilters ? 'No courses match the current search and filter selection.' : 'No courses match the current search.'}
+          {hasActiveFilters
+            ? 'No courses match the current search and filter selection.'
+            : 'No courses match the current search.'}
         </div>
       ) : (
         <>

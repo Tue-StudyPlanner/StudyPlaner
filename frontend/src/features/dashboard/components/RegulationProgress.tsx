@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { CatBadge } from '../../../shared/components/CatBadge'
 import type { MasterCat } from '../../courses'
 import type { RegulationAreaCourse, RegulationAreaProgress } from '../types'
 
@@ -17,7 +16,8 @@ function colorClass(masterCat: MasterCat | null): string {
 }
 
 function formatCourseLabel(course: RegulationAreaCourse): string {
-  const parts = [course.courseNumber, course.semester, `${course.ects} ECTS`].filter(Boolean)
+  const gradePart = course.grade !== null ? `Note: ${course.grade.toFixed(1)}` : null
+  const parts = [course.courseNumber, course.semester, `${course.ects} ECTS`, gradePart].filter(Boolean)
   return parts.join(' · ')
 }
 
@@ -31,8 +31,8 @@ function RegulationAreaDetailModal({
   const courses = area.courses ?? []
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="regulation-area-modal-title">
-      <div className="flex max-h-[min(42rem,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-[14px] border border-border bg-surface shadow-2xl">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="regulation-area-modal-title" onClick={onClose}>
+      <div className="flex max-h-[min(42rem,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-[14px] border border-border bg-surface shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -53,9 +53,10 @@ function RegulationAreaDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-border px-3 py-2 text-[12px] font-medium text-fg transition-colors hover:bg-surface-hover"
+            aria-label="Close"
+            className="rounded-md border border-border px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-surface-hover"
           >
-            Close
+            ×
           </button>
         </div>
 
@@ -69,15 +70,10 @@ function RegulationAreaDetailModal({
               {courses.map((course) => (
                 <div
                   key={course.completedCourseId}
-                  className="flex items-center justify-between gap-3 rounded-[10px] border border-border-light bg-surface-hover/35 px-4 py-3"
+                  className="rounded-[10px] border border-border-light bg-surface-hover/35 px-4 py-3"
                 >
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-semibold text-fg">{course.title}</div>
-                    <div className="text-[12px] text-fg-muted">{formatCourseLabel(course)}</div>
-                  </div>
-                  <div className="shrink-0">
-                    {course.masterCat ? <CatBadge cat={course.masterCat} /> : null}
-                  </div>
+                  <div className="truncate text-[13px] font-semibold text-fg">{course.title}</div>
+                  <div className="text-[12px] text-fg-muted">{formatCourseLabel(course)}</div>
                 </div>
               ))}
             </div>
@@ -106,7 +102,7 @@ export function RegulationProgress({ areas }: RegulationProgressProps) {
 
   return (
     <>
-      <div className="rounded-[10px] border border-border bg-surface px-6 py-5.5">
+      <div className="overflow-hidden rounded-[10px] border border-border bg-surface px-6 py-5.5">
         <div className="mb-4.5 flex items-center justify-between gap-3">
           <div>
             <div className="text-[14px] font-semibold text-fg">Regulation Progress</div>
@@ -125,15 +121,15 @@ export function RegulationProgress({ areas }: RegulationProgressProps) {
                 key={area.code}
                 type="button"
                 onClick={() => setSelectedAreaCode(area.code)}
-                className="rounded-[10px] border border-transparent px-2 py-1 text-left transition-colors hover:border-border hover:bg-surface-hover/35"
+                className="w-full min-w-0 rounded-[10px] border border-transparent px-2 py-1 text-left transition-colors hover:border-border hover:bg-surface-hover/35"
               >
-                <div className="mb-1.5 flex items-center justify-between gap-3">
+                <div className="mb-1.5 flex min-w-0 items-center justify-between gap-3">
                   <div className="min-w-0 flex items-center gap-2">
                     <span className={`inline-block h-2 w-2 rounded-xs ${colorClass(area.masterCat)}`} />
                     <span className="text-[13px] font-semibold text-fg">{area.code}</span>
                     <span className="truncate text-[12px] text-fg-muted">{area.name}</span>
                     {area.isFulfilled ? (
-                      <span className="rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
+                      <span className="shrink-0 rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
                         Fulfilled
                       </span>
                     ) : null}

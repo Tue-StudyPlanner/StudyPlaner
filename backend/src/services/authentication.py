@@ -620,14 +620,20 @@ async def update_current_user_profile(
         [user_id],
     )
 
+    current_study_program_id = current_profile_row.get('studyProgramId') if current_profile_row else None
+    study_program_is_changing = 'studyProgramId' in payload or 'studyProgramCode' in payload
     next_study_program_id = (
         await _resolve_study_program_id(env, payload)
-        if 'studyProgramId' in payload or 'studyProgramCode' in payload
-        else current_profile_row.get('studyProgramId') if current_profile_row else None
+        if study_program_is_changing
+        else current_study_program_id
     )
+
+    regulation_version_is_explicit = 'regulationVersionId' in payload or 'regulationVersionCode' in payload
+    program_switched = study_program_is_changing and next_study_program_id != current_study_program_id
     next_regulation_version_id = (
         await _resolve_regulation_version_id(env, payload)
-        if 'regulationVersionId' in payload or 'regulationVersionCode' in payload
+        if regulation_version_is_explicit
+        else None if program_switched
         else current_profile_row.get('regulationVersionId') if current_profile_row else None
     )
 

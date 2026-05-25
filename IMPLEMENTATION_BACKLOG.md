@@ -1,136 +1,214 @@
 # Implementation Backlog
 
-This file tracks the next implementation work. Items may be split into smaller subtasks or reordered if that makes delivery safer or easier.
+Tracked changes for the StudyPlaner frontend.
+Each group = one branch + one commit. Branch name: `fix/<group-slug>`.
 
-## Delivery rules
+---
 
-- Implement each larger feature on its own branch.
-- Use feature-focused commits per branch.
-- Closely related subtasks may be grouped into one larger commit when that keeps the change coherent.
-- Mark completed items with `[x]` and optionally append the commit hash.
+## Status legend
 
-## Confirmed specification decisions (2026-05-25)
+| Symbol | Meaning |
+|--------|---------|
+| `[ ]` | Open |
+| `[~]` | In progress |
+| `[x]` | Done |
+| `[!]` | Blocked |
 
-### 1. Dashboard regulation breakdown and progress UX
+---
 
-- Only top-level examination-regulation areas are clickable from the dashboard.
-- The regulation-part breakdown opens in a modal.
-- The grouping fix must cover all bachelor programs that already have regulation support.
-- If a course could fit more than one regulation area, the modal/detail view should show it only in the single primary area to which the current progress logic assigns it.
+## Group A — Modal / overlay UX fixes
 
-### 2. Catalog filtering
+**Branch:** `fix/modal-ux`
+**Files:** `RegulationProgress.tsx`, `SemesterPlanner.tsx`
 
-- ECTS filtering uses exact ECTS values with multi-select.
-- Topic-area filter options come from the active examination regulation.
-- Multiple selected topic areas use OR logic.
-- Text search combines with structured filters using AND logic.
+- [ ] **A-1** Replace all text "Close" buttons with an icon-only `×` button
+  - `RegulationAreaDetailModal` — RegulationProgress.tsx:53–59
+  - `PlannerOverflowDialog` — SemesterPlanner.tsx:167–174
+  - `MobilePlannerFavoritesDrawer` — SemesterPlanner.tsx:289–295
+  - Use a consistent `<button>` with `aria-label="Close"` and `×` as text content
 
-### 3. Manual course addition and regulation matching
+- [ ] **A-2** Backdrop click closes `RegulationAreaDetailModal`
+  - Add `onClick={onClose}` to the outer `div` (RegulationProgress.tsx:34)
+  - Add `onClick={e => e.stopPropagation()}` to the inner modal `div` so clicks inside don't bubble
 
-- Automatic match priority is: exact course ID -> exact normalized course name -> user choice from suggestions if ambiguity remains; no automatic fuzzy assignment.
-- Ambiguous regulation matches must be resolved by the user from suggestions.
-- If a manually added course matches a regulation-defined required course, its category stays visible but becomes read-only.
-- Manually added courses outside the regulation are allowed.
-- Unmatched manual courses may be assigned to non-strict regulation-compatible areas.
-- Any course may count as ÜBK across all regulations, and ÜBK grades must not affect the grade average.
+- [ ] **A-3** Remove `CatBadge` from course rows inside `RegulationAreaDetailModal`
+  - Redundant — user clicked on that regulation area, so they already know the category
+  - Delete lines 78–80 in RegulationProgress.tsx
 
-### 4. Planner desktop layout, semester controls, and planning summary
+---
 
-- The fixed-layout requirement currently applies to the weekly schedule view itself, not necessarily the full page.
-- The planner semester dropdown must not allow semesters before the study start semester.
-- The planner should allow semesters from the start semester through the current semester plus one future semester.
-- Planner summary values should be based only on courses placed in the weekly schedule.
-- The planner summary only needs to show fulfilled regulation parts.
-- The right-side favorites list should only be visible in edit mode.
-- The semester edit button only toggles edit mode; no separate semester settings are required.
+## Group B — Grade display in regulation area detail
 
-### 5. Planner schedule interaction and overlap handling
+**Branch:** `fix/regulation-grade`
+**Files:** `backend/src/services/progress.py`, `frontend/src/features/dashboard/types.ts`, `RegulationProgress.tsx`
 
-- Overlapping courses should render side by side, up to three visible cards per timeslot.
-- Additional overlapping courses beyond three should collapse behind a `+n` indicator.
-- Conflict coloring should use a lightly desaturated red only, without extra warning iconography.
-- Hidden overlaps behind `+n` should open in a desktop popover and a mobile bottom sheet.
+- [ ] **B-1** Expose `grade` in backend course detail serializer
+  - `_build_completed_course_detail` (progress.py:66–82) has access to `grade` from the query (line 291) but does not include it in the return dict
+  - Add `'grade': _normalize_float(completed_course.get('grade'))` to the return value
 
-### 6. Planner mobile mode and header responsiveness
+- [ ] **B-2** Add `grade` to `RegulationAreaCourse` type
+  - `frontend/src/features/dashboard/types.ts:10–18`
+  - Add `grade: number | null`
 
-- Mobile planner mode should support automatic responsive activation plus a manual override.
-- The mobile-mode preference should be stored in the user account.
-- The mobile planner should let us try both a compact weekly view and a simplified weekly list view before one final layout is chosen.
-- The mobile header should use a combined compact strategy: smaller logo, reduced title footprint, and an overflow menu for actions.
-- Mobile favorites should open in a bottom sheet or drawer.
+- [ ] **B-3** Show grade in `RegulationAreaDetailModal` course rows
+  - Update `formatCourseLabel` (RegulationProgress.tsx:19–22) to append `· Note: X.X` (omit if null)
+  - Example result: `INF4321 · WS 24/25 · 6 ECTS · 1.7`
 
-## Open specification questions
+---
 
-- No critical open blockers remain at the moment.
-- During implementation, the mobile planner should expose both trial layouts so the preferred variant can be chosen after hands-on testing.
+## Group C — Planner layout restructure
 
-## 1. Dashboard regulation breakdown and progress UX
+**Branch:** `fix/planner-layout`
+**Files:** `SemesterPlanner.tsx`, `PlannerFeedback.tsx`
 
-- [x] 1.1 Audit the bachelor dashboard grouping logic and confirm where mathematics and core-informatics requirement sections are still split incorrectly, including all bachelor programs with supported regulation mappings. (commit: b27e39d)
-- [x] 1.2 Normalize dashboard requirement grouping so top-level regulation parts are shown consistently across supported bachelor programs. (commit: b27e39d)
-- [x] 1.3 Replace the current "complete courses" dashboard entry point with clickable top-level examination-regulation parts. (commit: b27e39d)
-- [x] 1.4 Add a modal detail view that lists all courses counted toward the selected regulation part. (commit: b27e39d)
-- [x] 1.5 Keep the existing overall regulation-progress window and progress behavior stable while opening the detailed breakdown. (commit: b27e39d)
-- [x] 1.6 Define and implement deterministic display/counting rules for courses that could satisfy more than one regulation area, using the current primary regulation assignment. (commit: b27e39d)
+- [ ] **C-1** Remove the two header badge tags
+  - Delete the `mb-2 flex flex-wrap gap-2` div containing "Account-based planning" and "One plan per semester" (SemesterPlanner.tsx:668–675)
 
-## 2. Catalog filtering
+- [ ] **C-2** Move `PlannerAssignment` section below the schedule in edit mode
+  - Extract the assignment block (PlannerFeedback.tsx:172–208) into a separate `PlannerAssignment` component
+  - In `SemesterPlanner`, render `PlannerAssignment` after `PlannerGrid` (not inside `PlannerFeedback`)
+  - `PlannerFeedback` then only renders: ECTS summary + fulfilled regulation parts
+  - `PlannerAssignment` only renders when `isEditing && plannedCourses.length > 0`
 
-- [x] 2.1 Add structured filters to the catalog in addition to the existing text search. (commit: ee95aef)
-- [x] 2.2 Add exact-value ECTS filtering with multi-select support. (commit: ee95aef)
-- [x] 2.3 Build topic-area filters from the active examination regulation. (commit: ee95aef)
-- [x] 2.4 Combine multiple selected topic areas using OR logic. (commit: ee95aef)
-- [x] 2.5 Combine structured filters with text search using AND logic. (commit: ee95aef)
+- [ ] **C-3** Align `PlannerFavoritesPanel` flush with the schedule block (desktop edit)
+  - Current structure: `[PlannerFeedback + PlannerGrid] | [PlannerFavoritesPanel]` — favorites aligns to PlannerFeedback top
+  - Target structure: `PlannerFeedback` full-width above, then `[PlannerGrid | PlannerFavoritesPanel]` side-by-side below
+  - Restructure `SemesterPlanner` grid in edit mode:
+    ```
+    <PlannerFeedback />                         ← full width, always
+    <div grid xl:grid-cols-[1fr_20rem]>
+      <div>
+        <PlannerGrid />
+        <PlannerAssignment />                   ← after grid, edit only
+      </div>
+      <PlannerFavoritesPanel />                 ← edit only, desktop only
+    </div>
+    ```
 
-## 3. Manual course addition and regulation matching
+---
 
-- [x] 3.1 Detect whether a manually added course matches a required course in the selected examination regulation. (commit: 7df7616)
-- [x] 3.2 Implement the automatic match priority: exact course ID, then exact normalized course name, then user suggestions if ambiguity remains, without fuzzy auto-assignment. (commit: 7df7616)
-- [x] 3.3 If a course matches a regulation-defined required course, show its category as visible but read-only. (commit: 7df7616)
-- [x] 3.4 If matching remains ambiguous, require the user to choose from suggested matches. (commit: 7df7616)
-- [x] 3.5 Allow manually added courses outside the regulation, but restrict manual assignment to non-strict regulation-compatible areas. (commit: 7df7616)
-- [x] 3.6 Allow any unmatched manual course to count as ÜBK across all regulations and exclude ÜBK grades from GPA calculation. (commit: 7df7616)
-- [x] 3.7 Ensure manually assigned tags remain compatible with the active examination regulation. (commit: 7df7616)
+## Group D — Weekly planner scroll fix
 
-## 4. Planner desktop layout, semester controls, and planning summary
+**Branch:** `fix/planner-scroll`
+**Files:** `SemesterPlanner.tsx`
 
-- [x] 4.1 Keep the weekly schedule view fixed in the desktop layout and reduce unnecessary scrolling around it.
-- [x] 4.2 Remove the redundant "saved view" planner label/state.
-- [x] 4.3 Replace the current weekly-schedule header slot with the semester dropdown and the edit-mode toggle for the active semester.
-- [x] 4.4 Prevent semester selection before the user's study start semester and cap future choices at current semester +1.
-- [x] 4.5 Add a planner summary above the schedule based only on currently planned courses, with planned ECTS and fulfilled regulation parts.
-- [x] 4.6 Remove or downgrade the old block-coverage-only feedback in favor of the regulation-coverage summary.
-- [x] 4.7 Show favorite courses in a scrollable right-side panel only in edit mode.
+- [ ] **D-1** Investigate and remove internal scroll from the weekly plan block
+  - User reports the weekly plan block scrolls within itself on mobile
+  - The grid wrapper has `overflow-x-auto` (SemesterPlanner.tsx:473) causing horizontal scroll
+  - On mobile (`isMobilePlanner = true`) the layout already switches to `weekly-list` — verify this is actually active and not falling through to the grid
+  - Fix: ensure `overflow-x-auto` only applies when the grid is actually rendered (not in list mode); remove it entirely if the grid can be made to fit through column resizing
 
-## 5. Planner schedule interaction and overlap handling
+---
 
-- [x] 5.1 When multiple planned courses share the same timeslot, render up to three of them next to each other instead of hiding them behind one another.
-- [x] 5.2 Collapse additional overlaps beyond three behind a `+n` overflow indicator.
-- [x] 5.3 Mark conflicting overlapping schedule items with a lightly desaturated red.
-- [x] 5.4 Open hidden overlapping courses from the `+n` overflow state via a desktop popover and a mobile bottom sheet.
-- [x] 5.5 Verify that overlap rendering still stays readable alongside the new right-side favorites panel and summary area.
+## Group E — Dashboard mobile layout
 
-## 6. Planner mobile mode and header responsiveness
+**Branch:** `fix/dashboard-mobile`
+**Files:** `Dashboard.tsx`, `SpecializationCircle.tsx`
 
-- [x] 6.1 Add a mobile planner mode with automatic responsive activation plus a manual override.
-- [x] 6.2 Persist the mobile-mode preference in the user account.
-- [x] 6.3 Fix the current mobile planner loading/rendering issue where the right side becomes blank or appears only half loaded.
-- [x] 6.4 Rework the planner into two mobile weekly layouts for evaluation after the desktop planner changes are stable: a compact weekly view and a simplified weekly list view, with a way to switch between them.
-- [x] 6.5 Move mobile favorites into a bottom sheet or drawer.
-- [x] 6.6 Revisit the mobile top bar because logo, title, and action icons currently compete for the same space.
-- [x] 6.7 Implement the compact mobile header strategy using a smaller logo, reduced title footprint, and an overflow menu for actions.
+- [ ] **E-1** Fix `SpecializationCircle` overflowing on mobile
+  - SVG is hardcoded `420×420` with `min-w-[420px]` (SpecializationCircle.tsx:67)
+  - The `overflow-x-auto` on the wrapper prevents clipping but causes horizontal scroll within the card
+  - Fix: use `viewBox="0 0 420 420"` without `min-w` and let the SVG scale via `width="100%" height="auto"` — the viewBox already exists (line 67), just remove the fixed pixel classes
 
-## Suggested implementation order
+- [ ] **E-2** Fix `grid-cols-2` dashboard layout breaking on small screens
+  - `Dashboard.tsx:111` — `grid grid-cols-2 gap-4.5` puts RegulationProgress and SpecializationCircle side by side on all screen sizes
+  - On mobile both columns are too narrow; SpecializationCircle is invisible
+  - Fix: change to `grid-cols-1 lg:grid-cols-2`
 
-1. Dashboard regulation breakdown and progress UX
-2. Manual course addition and regulation matching
-3. Catalog filtering
-4. Planner desktop layout, semester controls, and planning summary
-5. Planner schedule interaction and overlap handling
-6. Planner mobile mode and header responsiveness
+- [ ] **E-3** Fix stats row `grid-cols-3` breaking on small screens
+  - `Dashboard.tsx:103` — `grid grid-cols-3 gap-6` hardcodes 3 columns
+  - On narrow screens the stat items are squeezed
+  - Fix: change to `grid-cols-3` with reduced gaps and font scaling, or stack as `grid-cols-1 sm:grid-cols-3`
 
-## Dependencies
+---
 
-- Section 1 should land before any deeper dashboard refinements that depend on the new regulation-part drill-down.
-- Section 3 depends on the existing examination-regulation mappings being reliable enough for matching.
-- Section 5 depends on section 4.
-- Section 6 depends on sections 4 and 5.
+## Group F — General mobile audit (all tabs)
+
+**Branch:** `fix/mobile-audit`
+**Files:** TBD per finding
+
+- [ ] **F-1** Audit all tab views on mobile and fix layout issues
+  - Tabs to check: Dashboard, Catalog, Planner, Transcript, Account, CourseDetail
+  - Known issues already tracked in Groups D + E
+  - Document remaining findings here during implementation and add sub-tasks as needed
+
+---
+
+## Group G — Mobile TopBar: Account in Dropdown
+
+**Branch:** `fix/mobile-topbar-account`
+**Files:** `TopBar.tsx`
+
+- [ ] **G-1** Remove standalone gear/settings icon from mobile topbar
+  - Currently there's a separate `<Link to={ROUTES.account}>` gear icon next to the hamburger button (TopBar.tsx:31–41)
+  - Delete it — account access moves to the dropdown
+
+- [ ] **G-2** Add "Account" NavLink inside the mobile drawer menu
+  - In the drawer nav list (TopBar.tsx:114–133), append an "Account" item after the regular nav links
+  - Use a user/person icon or the existing `GearIcon`, label "Account"
+  - Closes the drawer on click (`onClick={() => setIsMenuOpen(false)}`)
+
+---
+
+---
+
+## Group H — Catalog filter: flexible areas only + abbreviations
+
+**Branch:** `fix/catalog-filter`
+**Files:** `frontend/src/features/courses/components/Overview.tsx`, `frontend/src/shared/utils/regulation.ts`
+
+- [x] **H-1** Compact/simplify `Overview.tsx` without behavior change
+  - Remove any state duplication or redundant wrappers
+  - Consolidate `toggleNumberSelection` / `toggleStringSelection` if possible
+  - Keep it lean before adding feature changes
+
+- [x] **H-2** Replace `topicAreaOptions` with `buildFlexibleRegulationAreaOptions`
+  - Current: `(regulationVersion?.ruleGroups ?? []).map(rg => ({ code: rg.code, label: rg.name }))` — includes THESIS and all non-elective areas
+  - Fix: import and call `buildFlexibleRegulationAreaOptions(regulationVersion.ruleGroups)` — already filters THESIS and non-flexible groups
+  - Unauthenticated / no-PO users: no change — empty state ("Select a study program...") stays as-is since `regulationVersion` is null
+
+- [x] **H-3** Use `option.code` as chip label for topic area chips
+  - `buildFlexibleRegulationAreaOptions` already returns `{ code, label }` where `code` is e.g. `INFO-INFO`, `ML-CS`, `MEDI-APPL`
+  - Change chip `label` prop to `topicAreaOption.code` instead of `topicAreaOption.label`
+  - Gives user-requested abbreviations (INFO-INFO, INFO-THEO, MEDI-APPL, ML-CS etc.)
+
+---
+
+## Group I — Transcript mobile layout
+
+**Branch:** `fix/transcript-mobile`
+**Files:** `frontend/src/features/transcript/components/Transcript.tsx`
+
+- [x] **I-1** Fix `AuthenticatedTranscript` two-column layout on mobile
+  - Current: `grid-cols-5` always — left (col-span-2) + right (col-span-3) crammed on mobile
+  - Fix: `grid-cols-1 lg:grid-cols-[2fr_3fr]` — stack on mobile, side-by-side on desktop
+
+- [x] **I-2** Fix stats row inside `AuthenticatedTranscript`
+  - Current: `grid-cols-3 gap-3.5` always — stat cells too narrow on mobile
+  - Fix: keep `grid-cols-3` but reduce padding and use `sm:px-6` pattern; or `text-xl sm:text-2xl` on the value
+
+---
+
+## Group J — Mobile overflow: no horizontal scroll
+
+**Branch:** `fix/mobile-overflow`
+**Files:** `Dashboard.tsx`, `RegulationProgress.tsx`, global layout shell
+
+- [x] **J-1** Fix Dashboard stat row overflow on mobile
+  - `grid-cols-3` + `px-4` on narrow screens → `text-2xl` value + sub text inline overflow their cells
+  - Fix: make sub text wrap below value (`flex-col` instead of `flex items-baseline`) on the `StatItem` component; or reduce value font to `text-xl sm:text-2xl`
+
+- [x] **J-2** Fix RegulationProgress items going beyond white border
+  - Regulation area buttons have `flex items-center justify-between gap-3` with code + name + "Fulfilled" badge + ECTS fraction
+  - On mobile the combined width can exceed the card; the card has no `overflow-hidden`
+  - Fix: add `overflow-hidden` to the outer card div; ensure the inner row always has `min-w-0` on the left flex container so `truncate` works on the name
+
+- [x] **J-3** Enforce no global horizontal scroll on mobile
+  - Add `overflow-x-hidden` to the main content container (or `body`) so that any uncaught overflow is clipped rather than creating a scrollbar
+  - Check that the layout shell wrapper handles this correctly without breaking any intentionally scrollable containers (e.g. planner grid inside its own `overflow-x-auto` box)
+
+---
+
+## Backlog (unplanned)
+
+<!-- Raw ideas / future work that has not been scoped yet -->

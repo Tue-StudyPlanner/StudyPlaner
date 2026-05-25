@@ -13,6 +13,7 @@ export interface RegulationAreaCourse {
   courseNumber: string | null
   title: string
   ects: number
+  grade: number | null
   semester: string
   masterCat: MasterCat | null
 }

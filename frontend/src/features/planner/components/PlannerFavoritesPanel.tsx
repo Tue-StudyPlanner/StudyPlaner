@@ -23,11 +23,11 @@ function CandidateCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate text-[13px] font-semibold text-fg">{course.title}</div>
-          <div className="text-[12px] text-fg-muted">
+          <div className="break-words text-[13px] font-semibold text-fg">{course.title}</div>
+          <div className="break-words text-[12px] text-fg-muted">
             {course.number} · {course.ects ?? '–'} ECTS
           </div>
-          <div className="mt-1 text-[11px] text-fg-muted">
+          <div className="mt-1 break-words text-[11px] text-fg-muted">
             {course.schedule.at(0)?.day ?? 'Day tba'} · {course.schedule.at(0)?.time ?? 'Time tba'}
           </div>
         </div>

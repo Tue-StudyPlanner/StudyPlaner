@@ -206,7 +206,7 @@ export function AccountPage() {
   const inputClass = 'rounded-[10px] border border-border bg-surface px-3.5 py-2.5 text-[13.5px] text-fg outline-none transition-colors placeholder:text-fg-muted focus:border-primary'
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">

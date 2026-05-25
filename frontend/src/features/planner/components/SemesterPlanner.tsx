@@ -8,7 +8,7 @@ import type { Course } from '../../courses'
 import { useCatalogCourses } from '../../courses'
 import { useFavorites } from '../../favorites'
 import { PlannerFavoritesPanel } from './PlannerFavoritesPanel'
-import { PlannerFeedback } from './PlannerFeedback'
+import { PlannerAssignment, PlannerFeedback } from './PlannerFeedback'
 import { useSemesterPlanner } from '../hooks/useSemesterPlanner'
 import { DAY_LABELS, DAY_ORDER, buildPlannerBlocks, type PlannerBlock } from '../utils/plannerFeedback'
 
@@ -167,9 +167,10 @@ function PlannerOverflowDialog({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-border px-3 py-2 text-[12px] font-medium text-fg transition-colors hover:bg-surface-hover"
+            aria-label="Close"
+            className="rounded-md border border-border px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-surface-hover"
           >
-            Close
+            ×
           </button>
         </div>
 
@@ -288,9 +289,10 @@ function MobilePlannerFavoritesDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-border px-3 py-2 text-[12px] font-medium text-fg transition-colors hover:bg-surface-hover"
+            aria-label="Close"
+            className="rounded-md border border-border px-3 py-2 text-[13px] font-medium text-fg transition-colors hover:bg-surface-hover"
           >
-            Close
+            ×
           </button>
         </div>
         {children}
@@ -463,15 +465,15 @@ function PlannerGrid({
           {hasUnsavedChanges ? <span className="text-primary">You have unsaved changes.</span> : null}
         </div>
 
-        {isMobilePlanner && mobileLayout === 'weekly-list' ? (
+        {isMobilePlanner ? (
           <PlannerWeeklyListView
             plannedCourses={plannedCourses}
             isEditing={isEditing}
             onRemoveCourse={onRemoveCourse}
           />
         ) : (
-          <div className="overflow-x-auto">
-            <div className={`grid ${isMobilePlanner ? 'min-w-[620px]' : 'min-w-[720px]'} grid-cols-[64px_repeat(5,minmax(0,1fr))] gap-2`}>
+          <div>
+            <div className="grid grid-cols-[64px_repeat(5,minmax(0,1fr))] gap-2">
               <div />
               {DAY_ORDER.map((day) => (
                 <div
@@ -635,7 +637,7 @@ export function SemesterPlanner() {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="mb-6">
           <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
             Semester Planner
@@ -653,7 +655,7 @@ export function SemesterPlanner() {
   }
 
   const plannerMobileMode = user.profile.plannerMobileMode ?? 'auto'
-  const plannerMobileLayout = user.profile.plannerMobileLayout ?? 'compact-grid'
+  const plannerMobileLayout = user.profile.plannerMobileLayout ?? 'weekly-list'
   const isMobilePlanner = plannerMobileMode === 'mobile'
     || (plannerMobileMode === 'auto' && isSmallViewport)
   const favoriteCourses = courses.filter((course) => favoriteIds.includes(course.id))
@@ -665,14 +667,6 @@ export function SemesterPlanner() {
   return (
     <div className="p-4 sm:p-8">
       <div className="mb-6">
-        <div className="mb-2 flex flex-wrap gap-2">
-          <div className="inline-flex rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-            Account-based planning
-          </div>
-          <div className="inline-flex rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-            One plan per semester
-          </div>
-        </div>
         <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
           Semester Planner
         </h1>
@@ -701,17 +695,15 @@ export function SemesterPlanner() {
         </div>
       ) : null}
 
-      <div className={`grid items-start gap-4.5 ${isEditing && !isMobilePlanner ? 'xl:grid-cols-[minmax(0,1fr)_20rem]' : ''}`}>
-        <div className="grid gap-4.5">
-          <PlannerFeedback
-            plannedCourses={plannedCourses}
-            studyProgramCode={user?.profile.studyProgramCode ?? null}
-            planAssignments={planAssignments}
-            regulationRuleGroups={regulationVersion?.ruleGroups ?? []}
-            isEditing={isEditing}
-            onSetAssignment={setAssignment}
-          />
+      <PlannerFeedback
+        plannedCourses={plannedCourses}
+        studyProgramCode={user?.profile.studyProgramCode ?? null}
+        planAssignments={planAssignments}
+        regulationRuleGroups={regulationVersion?.ruleGroups ?? []}
+      />
 
+      <div className={`mt-4.5 grid items-start gap-4.5 ${isEditing && !isMobilePlanner ? 'xl:grid-cols-[minmax(0,1fr)_20rem]' : ''}`}>
+        <div className="grid gap-4.5">
           {isLoadingSemesterPlan && !savedPlan && plannedCourseIds.length === 0 ? (
             <div className="rounded-[10px] border border-border bg-surface px-8 py-15 text-center text-[13.5px] text-fg-muted">
               Loading your saved plan for {activeSemesterLabel}...
@@ -749,6 +741,15 @@ export function SemesterPlanner() {
               }
             />
           )}
+
+          {isEditing ? (
+            <PlannerAssignment
+              plannedCourses={plannedCourses}
+              studyProgramCode={user?.profile.studyProgramCode ?? null}
+              planAssignments={planAssignments}
+              onSetAssignment={setAssignment}
+            />
+          ) : null}
         </div>
 
         {isEditing && !isMobilePlanner ? (

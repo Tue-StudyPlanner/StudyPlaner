@@ -77,8 +77,6 @@ interface PlannerFeedbackProps {
   studyProgramCode: string | null
   planAssignments: Record<string, string>
   regulationRuleGroups: RegulationRuleGroup[]
-  isEditing: boolean
-  onSetAssignment: (courseId: string, areaCode: string | null) => void
 }
 
 export function PlannerFeedback({
@@ -86,8 +84,6 @@ export function PlannerFeedback({
   studyProgramCode,
   planAssignments,
   regulationRuleGroups,
-  isEditing,
-  onSetAssignment,
 }: PlannerFeedbackProps) {
   const totalEcts = useMemo(
     () => plannedCourses.reduce((sum, course) => sum + (course.ects ?? 0), 0),
@@ -106,106 +102,122 @@ export function PlannerFeedback({
   )
 
   return (
-    <div className="grid gap-4.5">
-      <div className="grid gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
-        <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
-            Planned ECTS
-          </div>
-          <div className="mt-1 text-[30px] font-semibold leading-none text-fg">{totalEcts}</div>
-          <div className="mt-1 text-[12px] text-fg-muted">
-            {plannedCourses.length} planned course{plannedCourses.length !== 1 ? 's' : ''}
-          </div>
+    <div className="grid gap-4 lg:grid-cols-[14rem_minmax(0,1fr)]">
+      <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-fg-muted">
+          Planned ECTS
         </div>
-
-        <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[13px] font-semibold text-fg">Fulfilled regulation parts</div>
-              <p className="mt-1 text-[12px] text-fg-muted">
-                Based only on the courses currently placed in the weekly schedule.
-              </p>
-            </div>
-          </div>
-
-          {!studyProgramCode || regulationRuleGroups.length === 0 ? (
-            <div className="rounded-md border border-dashed border-border px-4 py-3 text-[12.5px] text-fg-muted">
-              Set your study program in Account to see the planner regulation summary.
-            </div>
-          ) : fulfilledAreas.length === 0 ? (
-            <div className="rounded-md border border-dashed border-border px-4 py-3 text-[12.5px] text-fg-muted">
-              No regulation part is fully covered by the current weekly plan yet.
-            </div>
-          ) : (
-            <div className="grid gap-3 lg:grid-cols-2">
-              {fulfilledAreas.map((area) => (
-                <div
-                  key={area.code}
-                  className="rounded-[10px] border border-border-light bg-surface-hover/35 px-4 py-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-[12.5px] font-semibold text-fg">{area.name}</div>
-                      <div className="text-[11.5px] text-fg-muted">{area.code}</div>
-                    </div>
-                    <div className="text-[12px] font-semibold text-fg">
-                      {area.earnedEcts}/{area.requiredEcts} ECTS
-                    </div>
-                  </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {area.courses.map((course) => (
-                      <span
-                        key={`${area.code}-${course.id}`}
-                        className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-fg-muted"
-                      >
-                        {course.title}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="mt-1 text-[30px] font-semibold leading-none text-fg">{totalEcts}</div>
+        <div className="mt-1 text-[12px] text-fg-muted">
+          {plannedCourses.length} planned course{plannedCourses.length !== 1 ? 's' : ''}
         </div>
       </div>
 
-      {isEditing && plannedCourses.length > 0 ? (
-        <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
-          <div className="mb-3 text-[13px] font-semibold text-fg">Planner assignment</div>
-          <p className="mb-3 text-[12px] text-fg-muted">
-            Choose which regulation area each planned course should count toward when more than one option exists.
-          </p>
-          <div className="grid gap-2 lg:grid-cols-2">
-            {plannedCourses.map((course) => {
-              const options = getAssignableOptions(course, studyProgramCode)
-              const currentValue = planAssignments[course.id] ?? ''
-              return (
-                <div key={course.id} className="rounded-md border border-border-light bg-surface-hover/40 px-3 py-2">
-                  <div className="mb-1.5 truncate text-[12px] font-medium text-fg">
-                    {course.title}
-                  </div>
-                  {options.length === 0 ? (
-                    <div className="text-[11.5px] text-fg-muted">No regulation areas found for this course</div>
-                  ) : (
-                    <select
-                      value={currentValue}
-                      onChange={(event) => onSetAssignment(course.id, event.target.value || null)}
-                      className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-[12px] text-fg outline-none focus:border-primary"
-                    >
-                      <option value="">Auto-detect</option>
-                      {options.map((option) => (
-                        <option key={option.code} value={option.code}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              )
-            })}
+      <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[13px] font-semibold text-fg">Fulfilled regulation parts</div>
+            <p className="mt-1 text-[12px] text-fg-muted">
+              Based only on the courses currently placed in the weekly schedule.
+            </p>
           </div>
         </div>
-      ) : null}
+
+        {!studyProgramCode || regulationRuleGroups.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border px-4 py-3 text-[12.5px] text-fg-muted">
+            Set your study program in Account to see the planner regulation summary.
+          </div>
+        ) : fulfilledAreas.length === 0 ? (
+          <div className="rounded-md border border-dashed border-border px-4 py-3 text-[12.5px] text-fg-muted">
+            No regulation part is fully covered by the current weekly plan yet.
+          </div>
+        ) : (
+          <div className="grid gap-3 lg:grid-cols-2">
+            {fulfilledAreas.map((area) => (
+              <div
+                key={area.code}
+                className="rounded-[10px] border border-border-light bg-surface-hover/35 px-4 py-3"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <div className="text-[12.5px] font-semibold text-fg">{area.name}</div>
+                    <div className="text-[11.5px] text-fg-muted">{area.code}</div>
+                  </div>
+                  <div className="text-[12px] font-semibold text-fg">
+                    {area.earnedEcts}/{area.requiredEcts} ECTS
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {area.courses.map((course) => (
+                    <span
+                      key={`${area.code}-${course.id}`}
+                      className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] text-fg-muted"
+                    >
+                      {course.title}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+interface PlannerAssignmentProps {
+  plannedCourses: Course[]
+  studyProgramCode: string | null
+  planAssignments: Record<string, string>
+  onSetAssignment: (courseId: string, areaCode: string | null) => void
+}
+
+export function PlannerAssignment({
+  plannedCourses,
+  studyProgramCode,
+  planAssignments,
+  onSetAssignment,
+}: PlannerAssignmentProps) {
+  if (plannedCourses.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="rounded-[10px] border border-border bg-surface px-5 py-4.5">
+      <div className="mb-3 text-[13px] font-semibold text-fg">Planner assignment</div>
+      <p className="mb-3 text-[12px] text-fg-muted">
+        Choose which regulation area each planned course should count toward when more than one option exists.
+      </p>
+      <div className="grid gap-2 lg:grid-cols-2">
+        {plannedCourses.map((course) => {
+          const options = getAssignableOptions(course, studyProgramCode)
+          const currentValue = planAssignments[course.id] ?? ''
+          return (
+            <div key={course.id} className="rounded-md border border-border-light bg-surface-hover/40 px-3 py-2">
+              <div className="mb-1.5 truncate text-[12px] font-medium text-fg">
+                {course.title}
+              </div>
+              {options.length === 0 ? (
+                <div className="text-[11.5px] text-fg-muted">No regulation areas found for this course</div>
+              ) : (
+                <select
+                  value={currentValue}
+                  onChange={(event) => onSetAssignment(course.id, event.target.value || null)}
+                  className="w-full rounded-md border border-border bg-surface px-2 py-1.5 text-[12px] text-fg outline-none focus:border-primary"
+                >
+                  <option value="">Auto-detect</option>
+                  {options.map((option) => (
+                    <option key={option.code} value={option.code}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

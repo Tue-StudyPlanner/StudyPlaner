@@ -49,7 +49,7 @@ function AuthenticatedDashboard() {
 
   if (isLoadingProgress || !progressSnapshot) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="mb-6">
           <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
             Study Overview
@@ -92,7 +92,7 @@ function AuthenticatedDashboard() {
   ]
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-8">
       <div className="mb-6">
         <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
           Study Overview
@@ -100,15 +100,15 @@ function AuthenticatedDashboard() {
         <p className="text-[13.5px] text-fg-muted">{subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-6 rounded-[10px] border border-border bg-surface px-6 py-4.5">
+      <div className="grid grid-cols-3 gap-3 rounded-[10px] border border-border bg-surface px-4 py-4 sm:gap-6 sm:px-6 sm:py-4.5">
         {stats.map((stat, i) => (
-          <div key={stat.label} className={i > 0 ? 'border-l border-border-light pl-6' : ''}>
+          <div key={stat.label} className={i > 0 ? 'border-l border-border-light pl-3 sm:pl-6' : ''}>
             <StatItem {...stat} />
           </div>
         ))}
       </div>
 
-      <div className="mt-4.5 grid grid-cols-2 gap-4.5">
+      <div className="mt-4.5 grid grid-cols-1 gap-4.5 lg:grid-cols-2">
         {progressSnapshot.regulationProgress.length > 0 ? (
           <RegulationProgress areas={progressSnapshot.regulationProgress} />
         ) : (
@@ -138,7 +138,7 @@ export function Dashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="mb-6">
           <h1 className="mb-0.75 font-serif text-[26px] font-semibold tracking-[-0.02em] text-fg">
             Study Overview
