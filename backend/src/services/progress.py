@@ -63,6 +63,17 @@ def _match_regulation(
     return mapping_regulation_version_id is None or mapping_regulation_version_id == active_regulation_version_id
 
 
+def _grade_quality_multiplier(grade: float | None) -> float:
+    """Map grade (1.0 best ... 4.0 worst) to a small quality multiplier.
+
+    Better grades should matter, but only as a light tilt on top of the ECTS weight.
+    """
+    if grade is None:
+        return 1.0
+    clamped_grade = max(1.0, min(4.0, grade))
+    return max(0.85, 1.05 - (clamped_grade - 1.0) * 0.06)
+
+
 def _build_completed_course_detail(completed_course: dict[str, Any]) -> dict[str, Any]:
     completed_course_id = int(completed_course['id'])
     direct_course_id = (
@@ -366,6 +377,7 @@ async def get_current_user_progress(env: Any, request: Any) -> dict[str, Any]:
             'colorToken': category.get('colorToken'),
             'sortOrder': int(category.get('sortOrder') or 0),
             'earnedEcts': 0.0,
+            'qualityScore': 0.0,
             'courses': [],
         }
         for category in progress_categories
@@ -421,8 +433,13 @@ async def get_current_user_progress(env: Any, request: Any) -> dict[str, Any]:
 
             category_entry = progress_by_category_id[mapping_category_id]
             weight = _normalize_float(mapping.get('weight')) or 1.0
-            earned_ects = (_normalize_float(completed_course.get('ects')) or 0.0) * weight
-            category_entry['earnedEcts'] += earned_ects
+            ects_value = (_normalize_float(completed_course.get('ects')) or 0.0) * weight
+            grade_multiplier = _grade_quality_multiplier(_normalize_float(completed_course.get('grade')))
+            reference_ects = category_entry['referenceEcts']
+            single_course_cap = (reference_ects * 0.3) if reference_ects > 0 else ects_value
+            capped_ects = min(ects_value, single_course_cap)
+            category_entry['earnedEcts'] += ects_value
+            category_entry['qualityScore'] += capped_ects * grade_multiplier
             category_entry['courses'].append(_build_completed_course_detail(completed_course))
 
         if not matched_category_ids:
@@ -432,11 +449,13 @@ async def get_current_user_progress(env: Any, request: Any) -> dict[str, Any]:
     for category in progress_by_category_id.values():
         reference_ects = category['referenceEcts']
         earned_ects = round(category['earnedEcts'], 2)
-        progress_ratio = 0.0 if reference_ects <= 0 else min(1.0, earned_ects / reference_ects)
+        quality_score = round(category['qualityScore'], 2)
+        progress_ratio = 0.0 if reference_ects <= 0 else min(1.0, quality_score / reference_ects)
         visualization_categories.append(
             {
                 **category,
                 'earnedEcts': earned_ects,
+                'qualityScore': quality_score,
                 'progressRatio': progress_ratio,
                 'progressPercentage': round(progress_ratio * 100),
             }
