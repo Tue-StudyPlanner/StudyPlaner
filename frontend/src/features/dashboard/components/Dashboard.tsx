@@ -119,11 +119,6 @@ function AuthenticatedDashboard() {
         />
       </div>
 
-      {progressSnapshot.unmappedCompletedCourses.length > 0 ? (
-        <div className="mt-4.5 rounded-[10px] border border-rose-200 bg-rose-50 px-6 py-4 text-[13px] text-rose-700">
-          {progressSnapshot.unmappedCompletedCourses.length} completed course(s) still need a specialization mapping.
-        </div>
-      ) : null}
     </div>
   )
 }

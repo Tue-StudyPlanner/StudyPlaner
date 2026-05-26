@@ -31,8 +31,8 @@ function RegulationAreaDetailModal({
   const courses = area.courses ?? []
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/45 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="regulation-area-modal-title" onClick={onClose}>
-      <div className="flex max-h-[min(42rem,90vh)] w-full max-w-3xl flex-col overflow-hidden rounded-[14px] border border-border bg-surface shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-40 overflow-y-auto bg-black/45 px-4 py-6" role="dialog" aria-modal="true" aria-labelledby="regulation-area-modal-title" onClick={onClose}>
+      <div className="mx-auto flex w-full max-w-3xl flex-col rounded-[14px] border border-border bg-surface shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4 border-b border-border px-6 py-5">
           <div className="min-w-0">
             <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -60,20 +60,24 @@ function RegulationAreaDetailModal({
           </button>
         </div>
 
-        <div className="overflow-y-auto px-6 py-5">
+        <div className="px-6 py-5">
           {courses.length === 0 ? (
             <div className="rounded-[10px] border border-dashed border-border px-5 py-10 text-center text-[13px] text-fg-muted">
               No completed courses are counted toward this regulation part yet.
             </div>
           ) : (
-            <div className="grid gap-2.5">
+            <div className="grid gap-2 sm:gap-2.5">
               {courses.map((course) => (
                 <div
                   key={course.completedCourseId}
-                  className="rounded-[10px] border border-border-light bg-surface-hover/35 px-4 py-3"
+                  className="min-w-0 rounded-[10px] border border-border-light bg-surface-hover/35 px-3 py-2.5 sm:px-4 sm:py-3"
                 >
-                  <div className="truncate text-[13px] font-semibold text-fg">{course.title}</div>
-                  <div className="text-[12px] text-fg-muted">{formatCourseLabel(course)}</div>
+                  <div className="break-words text-[12.5px] font-semibold text-fg sm:text-[13px]">
+                    {course.title}
+                  </div>
+                  <div className="break-words text-[11.5px] text-fg-muted sm:text-[12px]">
+                    {formatCourseLabel(course)}
+                  </div>
                 </div>
               ))}
             </div>
