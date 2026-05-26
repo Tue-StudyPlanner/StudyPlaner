@@ -36,6 +36,17 @@ export interface ThesisProgress {
   requiredEcts: number
 }
 
+export interface VisualizationCategoryCourse {
+  completedCourseId: string
+  courseId: string | null
+  courseNumber: string | null
+  title: string
+  ects: number
+  grade: number | null
+  semester: string
+  masterCat: MasterCat | null
+}
+
 export interface VisualizationCategoryProgress {
   code: string
   name: string
@@ -45,6 +56,7 @@ export interface VisualizationCategoryProgress {
   progressRatio: number
   progressPercentage: number
   colorToken?: string | null
+  courses?: VisualizationCategoryCourse[]
 }
 
 export interface ProgressSummary {
